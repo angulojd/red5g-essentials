@@ -1,0 +1,8 @@
+{
+  "name": "red5g-essentials",
+  "version": "1.0.0",
+  "description": "Enterprise Python backend standards for serverless AWS projects. Code auditing (7 pillars), Git Flow automation, ruff gate hook, and workflow integration with OpenSpec + Essentials + Beads.",
+  "author": "red5g",
+  "homepage": "https://github.com/red5g/red5g-essentials",
+  "license": "MIT"
+}
