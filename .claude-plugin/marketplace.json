@@ -1,9 +1,18 @@
 {
+  "name": "red5g-essentials",
+  "version": "1.0.0",
+  "description": "Enterprise Python backend standards for serverless AWS projects",
+  "author": "angulojd",
+  "owner": {
+    "name": "angulojd"
+  },
+  "homepage": "https://github.com/angulojd/red5g-essentials",
   "plugins": [
     {
       "name": "red5g-essentials",
-      "description": "Enterprise Python backend standards for serverless AWS projects. Code auditing (7 pillars), Git Flow automation, ruff gate hook, and workflow integration.",
-      "path": "."
+      "description": "Code auditing (7 pillars), Git Flow automation, ruff gate hook, and workflow integration with OpenSpec + Essentials + Beads.",
+      "version": "1.0.0",
+      "source": "."
     }
   ]
 }
