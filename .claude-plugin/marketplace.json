@@ -1,0 +1,9 @@
+{
+  "plugins": [
+    {
+      "name": "red5g-essentials",
+      "description": "Enterprise Python backend standards for serverless AWS projects. Code auditing (7 pillars), Git Flow automation, ruff gate hook, and workflow integration.",
+      "path": "."
+    }
+  ]
+}
