@@ -24,6 +24,21 @@ Plugin empresarial de estándares para backends Python serverless en AWS.
 /plugin install red5g
 ```
 
+### Plugins requeridos (una vez por desarrollador)
+```bash
+# Dentro de Claude Code — ejecutar una sola vez:
+
+# 1. Plugin de la empresa (agentes, skills, hooks)
+/plugin marketplace add angulojd/red5g-essentials
+/plugin install red5g
+
+# 2. Plugin de ejecución (loops, swarms, teams con exit criteria)
+/plugin marketplace add GantisStorm/essentials-claude-code
+/plugin install essentials@essentials-claude-code
+```
+
+> Sin Essentials instalado, los comandos `/implement-loop`, `/plan-creator`, `/plan-loop`, `/plan-swarm`, `/plan-team`, `/beads-converter` y `/beads-loop` no estarán disponibles.
+
 ### Proyecto nuevo
 ```bash
 mkdir mi-proyecto && cd mi-proyecto
@@ -178,7 +193,7 @@ En código, `config.py` las lee como variables de entorno via pydantic-settings.
 |-------------|-------------|-----------|
 | ruff | Sí | Linting + formateo (hook bloqueante) |
 | OpenSpec | Recomendada | Planificación arquitectónica con specs |
-| Essentials plugin | Recomendada | Loops, swarms, teams con exit criteria |
+| Essentials plugin | Sí | Loops, swarms, teams con exit criteria |
 | Beads | Opcional | Memoria persistente entre sesiones |
 | tmux | Opcional | Solo para modo `/plan-team` |
 
