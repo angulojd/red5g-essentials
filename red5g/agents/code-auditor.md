@@ -38,6 +38,9 @@ Use this information to adapt the audit to the current project.
 - Functions longer than 100 lines? → **CRITICAL**
 - Files longer than 400 lines? → **WARNING** (suggest splitting)
 - Are decorators used for cross-cutting concerns (error handling, logging, parsing)?
+- Handlers must be max 5 lines: parse event + call controller. If a handler contains business logic or try/except → **CRITICAL**.
+- Controllers must be decorated with `@handle_exceptions`. Controller without the decorator → **WARNING**.
+- Look for `try/except` in handlers or controllers → **CRITICAL**. All error handling goes through the `@handle_exceptions` decorator.
 
 ### Pillar 2: SOLID
 

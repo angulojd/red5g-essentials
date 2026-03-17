@@ -43,9 +43,9 @@ EOF
 ok "pyproject.toml created"; fi
 if [ "$SCAFFOLD" = true ] && [ "$TEMPLATE" = "backend-mysql" ]; then
 info "Creating project scaffold..."
-mkdir -p src/{handlers,services,repositories,models,schemas,utils,exceptions}
+mkdir -p src/{handlers,controllers,services,repositories,models,schemas,utils,exceptions}
 mkdir -p tests/{test_handlers,test_services,test_repositories}
-for d in src src/handlers src/services src/repositories src/models src/schemas src/utils src/exceptions tests tests/test_handlers tests/test_services tests/test_repositories; do touch "$d/__init__.py"; done
+for d in src src/handlers src/controllers src/services src/repositories src/models src/schemas src/utils src/exceptions; do touch "$d/__init__.py"; done
 [ ! -f "src/config.py" ] && cat > "src/config.py" << 'PYEOF'
 """Configuración centralizada via pydantic-settings.
 
@@ -159,6 +159,132 @@ S3_BUCKET=my-bucket
 DEBUG=true
 LOG_LEVEL=DEBUG
 EOF
+[ ! -f "src/exceptions/domain.py" ] && cat > "src/exceptions/domain.py" << 'PYEOF'
+"""Excepciones custom del dominio.
+
+Cada excepción define su status code HTTP para que
+el decorador @handle_exceptions las mapee automáticamente.
+"""
+
+from http import HTTPStatus
+
+
+class DomainException(Exception):
+    """Excepción base del dominio."""
+
+    default_message: str = "Error interno del servidor"
+
+    def __init__(self, message: str | None = None) -> None:
+        """Inicializa la excepción.
+
+        Args:
+            message: Mensaje descriptivo del error.
+        """
+        self.message = message or self.default_message
+        super().__init__(self.message)
+
+
+class NotFoundError(DomainException):
+    """Recurso no encontrado."""
+
+    status_code = HTTPStatus.NOT_FOUND
+    default_message = "Recurso no encontrado"
+
+
+class ValidationError(DomainException):
+    """Error de validación de datos."""
+
+    status_code = HTTPStatus.BAD_REQUEST
+    default_message = "Datos inválidos"
+
+
+class ConflictError(DomainException):
+    """Conflicto con el estado actual del recurso."""
+
+    status_code = HTTPStatus.CONFLICT
+    default_message = "Conflicto con el estado actual"
+
+
+class UnauthorizedError(DomainException):
+    """No autorizado."""
+
+    status_code = HTTPStatus.UNAUTHORIZED
+    default_message = "No autorizado"
+
+
+class ForbiddenError(DomainException):
+    """Acceso prohibido."""
+
+    status_code = HTTPStatus.FORBIDDEN
+    default_message = "Acceso prohibido"
+PYEOF
+[ ! -f "src/utils/decorators.py" ] && cat > "src/utils/decorators.py" << 'PYEOF'
+"""Decoradores transversales.
+
+@handle_exceptions captura todas las excepciones,
+loguea con contexto estructurado, y retorna JSON con status code.
+"""
+
+import functools
+import json
+import traceback
+from typing import Any, Callable
+from http import HTTPStatus
+
+from src.exceptions.domain import DomainException
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+def handle_exceptions(func: Callable) -> Callable:
+    """Decorador que captura excepciones y retorna respuesta HTTP JSON.
+
+    Captura DomainException (errores de negocio con status code)
+    y Exception genérica (500). Loguea con contexto estructurado.
+
+    Args:
+        func: Controller function a decorar.
+
+    Returns:
+        Callable: Función decorada con manejo de excepciones.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        """Wrapper que captura excepciones."""
+        try:
+            return func(*args, **kwargs)
+        except DomainException as e:
+            logger.warning(
+                "Error de dominio | func=%s | status=%s | error=%s",
+                func.__name__,
+                e.status_code,
+                e.message,
+            )
+            return {
+                "statusCode": e.status_code,
+                "body": json.dumps({
+                    "error": e.message,
+                    "type": type(e).__name__,
+                }),
+            }
+        except Exception as e:
+            logger.error(
+                "Error inesperado | func=%s | error=%s | trace=%s",
+                func.__name__,
+                str(e),
+                traceback.format_exc(),
+            )
+            return {
+                "statusCode": HTTPStatus.INTERNAL_SERVER_ERROR,
+                "body": json.dumps({
+                    "error": "Error interno del servidor",
+                }),
+            }
+
+    return wrapper
+PYEOF
 ok "Scaffold created"
 fi
 if [ ! -f "CLAUDE.md" ]; then
@@ -260,15 +386,56 @@ password = os.environ["DB_PASSWORD"]
 - [If AI: prompt injection shielding in SystemMessage]
 - [Input validation: max length, allowed characters, etc.]
 
+## 📁 Architecture Pattern
+```
+API Gateway Event
+    ↓
+Handler (src/handlers/api.py)         ← Parse event, call controller. MAX 5 lines.
+    ↓
+@handle_exceptions
+Controller (src/controllers/user.py)  ← Orchestrate services, return response.
+    ↓
+Service (src/services/user_service.py) ← Business logic, validations.
+    ↓
+Repository (src/repositories/user_repo.py) ← SQLAlchemy queries.
+    ↓
+Model (src/models/user.py)            ← SQLAlchemy ORM table definition.
+Schema (src/schemas/user.py)          ← Pydantic v2 API request/response.
+```
+```python
+# ✅ Handler — ultra light, no try/except
+def handler(event, context):
+    body = json.loads(event.get("body", "{}"))
+    return create_user_controller(body)
+
+# ✅ Controller — decorated, no try/except needed
+@handle_exceptions
+def create_user_controller(body: dict) -> dict:
+    schema = UserCreate(**body)
+    user = user_service.create(schema)
+    return {"statusCode": 201, "body": json.dumps({"id": user.id})}
+
+# ❌ WRONG — try/except in handler or controller
+def handler(event, context):
+    try:
+        body = json.loads(event["body"])
+        return create_user(body)
+    except Exception as e:
+        return {"statusCode": 500, "body": str(e)}
+```
+
 ## 📝 Notes for AI
 
 - Read `src/config.py` before touching any service.
-- Handlers (`src/handlers/`) ONLY parse + delegate. Zero business logic.
+- **Handler → Controller → Service → Repository** is the strict call chain.
+- Handlers (`src/handlers/`) ONLY parse Lambda event + call controller. Max 5 lines. No try/except.
+- Controllers (`src/controllers/`) orchestrate services. Always decorated with `@handle_exceptions`.
 - Services (`src/services/`) = business logic. One responsibility per file.
 - Repositories (`src/repositories/`) = SQLAlchemy queries. Services call repos.
 - Models (`src/models/`) = SQLAlchemy ORM. Schemas (`src/schemas/`) = Pydantic API validation.
+- **NEVER use try/except in handlers or controllers.** The `@handle_exceptions` decorator handles all errors.
 - NEVER call Secrets Manager directly. Credentials come from env vars via Serverless Framework.
-- Every new endpoint: handler → service → repository → model + schema → test.
+- Every new endpoint: handler → controller → service → repository → model + schema → test.
 CLAUDEMD
 ;;
 generic) cat > "CLAUDE.md" << 'CLAUDEMD'
@@ -329,7 +496,9 @@ echo "    ✓ src/services/        — business logic"
 echo "    ✓ src/repositories/    — SQLAlchemy queries"
 echo "    ✓ src/models/          — SQLAlchemy ORM models"
 echo "    ✓ src/schemas/         — Pydantic v2 API schemas"
-echo "    ✓ .env.example         — local dev variables"
+echo "    ✓ src/controllers/     — API logic (decorated with @handle_exceptions)"
+echo "    ✓ src/exceptions/domain.py — custom domain exceptions with status codes"
+echo "    ✓ src/utils/decorators.py  — @handle_exceptions decorator"
 echo ""
 fi
 echo "  Next steps:"
