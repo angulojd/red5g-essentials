@@ -25,7 +25,7 @@ if [ -d ".beads" ]; then ok "Already initialized"; else bd init --quiet; bd setu
 mkdir -p .claude/plans .claude/prompts .claude/prd .claude/agent-memory/code-auditor
 SETTINGS_FILE=".claude/settings.json"
 if [ ! -f "$SETTINGS_FILE" ]; then cat > "$SETTINGS_FILE" << 'EOF'
-{"permissions":{"allow":["bd *","openspec *","ruff *","gh *"]},"env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1"}}
+{"permissions":{"allow":["bd *","openspec *","ruff *"]},"env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1"}}
 EOF
 ok "settings.json created"; fi
 if [ ! -f "pyproject.toml" ]; then cat > "pyproject.toml" << 'EOF'
