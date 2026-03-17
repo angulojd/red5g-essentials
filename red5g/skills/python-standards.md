@@ -4,51 +4,55 @@ description: "Global Python backend coding standards for serverless AWS projects
 globs: ["**/*.py"]
 ---
 
-# Estándares de Código Python — red5g
+# Python Code Standards — red5g
 
-Estas reglas son INNEGOCIABLES. Aplican a TODOS los proyectos Python de la empresa. Lee también el `CLAUDE.md` del proyecto para reglas específicas del dominio.
+These rules are NON-NEGOTIABLE. They apply to ALL company Python projects. Also read the project's `CLAUDE.md` for domain-specific rules.
 
-## Reglas de Código
+## Code Rules
 
-### Tipado y Validación
-- Type hints OBLIGATORIOS en todas las funciones: parámetros Y retorno.
-- Usa `Pydantic v2` para validación de I/O. No dicts manuales con asserts.
-- Usa `pydantic-settings` para configuración. Todo en `config.py`.
+### Typing & Validation
+- Type hints MANDATORY on all functions: parameters AND return.
+- Use `Pydantic v2` for API I/O validation. No manual dicts with asserts.
+- Use `pydantic-settings` for configuration. Everything in `config.py`.
 
-### Estilo
-- Line-length: lo que diga `pyproject.toml`. Default: 100.
-- Naming: `snake_case` para variables/funciones, `PascalCase` para clases, `UPPER_SNAKE_CASE` para constantes.
-- 2 líneas vacías entre funciones top-level, 1 entre métodos de clase.
+### Style
+- Line-length: whatever `pyproject.toml` defines. Default: 100.
+- Naming: `snake_case` for variables/functions, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants.
+- 2 blank lines between top-level functions, 1 between class methods.
 
-### Idioma (ESTRICTO)
-- Código fuente (variables, funciones, clases, dict keys internos): **100% inglés**.
-- Docstrings, comentarios, mensajes de log: **100% español**.
-- Toda función pública, clase y módulo DEBE tener docstring en español.
+### Language (STRICT)
+- Source code (variables, functions, classes, internal dict keys): **100% English**.
+- Docstrings, inline comments, log messages: **100% Spanish**.
+- Every public function, class, and module MUST have a docstring in Spanish.
 
-### Seguridad
-- CERO credenciales hardcodeadas. Todo desde `config.py` con `pydantic-settings`.
-- PROHIBIDO `os.environ[`, `os.getenv(` fuera de `config.py`.
-- PROHIBIDO `print()` en producción. Usa `logger`.
-- Importa configuración SIEMPRE como: `from config import settings`.
+### Security
+- ZERO hardcoded credentials. Everything from `config.py` via `pydantic-settings`.
+- FORBIDDEN: `os.environ[`, `os.getenv(` outside `config.py`.
+- FORBIDDEN: `print()` in production. Use `logger`.
+- Always import config as: `from config import settings`.
 
-### Arquitectura
-- Handlers/entry points ultra-ligeros: solo parseo + delegación.
-- Funciones máximo 100 líneas. Más = refactorizar.
-- Máximo 3 niveles de anidamiento. Usa guard clauses.
-- SOLID: una responsabilidad por función/módulo, dependencias como parámetro.
+### Architecture
+- **Handler → Controller → Service → Repository** is the strict call chain.
+- Handlers: ONLY parse Lambda event + call controller. Max 5 lines. No try/except.
+- Controllers: orchestrate services. Always decorated with `@handle_exceptions`.
+- Functions max 100 lines. More = refactor.
+- Max 3 nesting levels. Use guard clauses.
+- SOLID: single responsibility per function/module, dependencies as parameters.
 
 ### Error Handling
-- Excepciones específicas, nunca `except Exception` genérico.
-- PROHIBIDO `except: pass` (errores silenciados).
-- Logs con contexto: incluir request_id, user_id, operación relevante.
+- **NEVER use try/except in handlers or controllers.** The `@handle_exceptions` decorator handles all errors.
+- Specific exceptions only, never bare `except Exception`.
+- FORBIDDEN: `except: pass` (silenced errors).
+- Logs with context: include request_id, user_id, relevant operation.
 
-### Workflow de Calidad
-- Hook PostToolUse ejecuta `ruff check` + `ruff format --check` en cada Write/Edit de `.py`.
-- Si falla, BLOQUEA la acción. Corrige antes de continuar.
-- Antes de commit, ejecuta el agente `code-auditor` sobre los archivos modificados.
-- No marques una tarea como completa hasta que `code-auditor` dé veredicto ✅.
+### Quality Workflow (MANDATORY)
+- PostToolUse hook runs `ruff check` + `ruff format --check` on every Write/Edit of `.py`. Blocks if fails.
+- **BEFORE marking ANY task as complete** (whether via OpenSpec /opsx:apply, Essentials /plan-loop, or manual work), you MUST delegate to the `code-auditor` agent to review all modified `.py` files.
+- If code-auditor returns 🔴 Critical issues, you MUST fix them before closing the task.
+- Do NOT proceed to the next task until code-auditor gives ✅ verdict.
+- This is NON-NEGOTIABLE. Skipping the audit is equivalent to shipping broken code.
 
 ### Git
-- Conventional Commits: `feat(scope): descripción`, `fix(scope): descripción`, etc.
-- Git Flow: feature/* desde develop, release/* y hotfix/* según el patrón.
-- Usa el agente `git-flow` para operaciones de branching.
+- Conventional Commits: `feat(scope): description`, `fix(scope): description`, etc.
+- Git Flow: feature/* from develop, release/* and hotfix/* per pattern.
+- Use the `git-flow` agent for branching operations.

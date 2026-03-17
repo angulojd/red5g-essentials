@@ -3,54 +3,51 @@ name: workflow-guide
 description: "Development workflow guide for the team. Explains when and how to use OpenSpec (planning), Essentials (execution with exit criteria), and Beads (persistent memory). Auto-activates when user asks about workflow, planning, or task management."
 ---
 
-# Guía de Workflow — OpenSpec + Essentials + Beads
+# Workflow Guide — OpenSpec + Essentials + Beads
 
-## Flujo Rápido (80% de tareas)
+## Quick Flow (80% of tasks)
 
-Para bugs, fixes, o tareas discutidas en el chat:
+For bugs, fixes, or tasks discussed in chat:
 ```
-/implement-loop <descripción de la tarea>
+/implement-loop <task description>
 ```
-Essentials implementa, corre tests, y loopea hasta que los exit criteria pasen. Para tareas paralelas independientes usa `/implement-swarm`. Para builds multi-componente usa `/implement-team`.
+Essentials implements, runs tests, and loops until exit criteria pass. For independent parallel tasks use `/implement-swarm`. For multi-component builds use `/implement-team`.
 
-## Flujo con Plan (Features medianas)
-
+## Plan Flow (Medium features)
 ```
-1. /plan-creator <descripción del feature>
-2. /plan-loop .claude/plans/<plan>.md       # o /plan-swarm o /plan-team
-```
-
-## Flujo con Specs (Features que necesitan diseño arquitectónico)
-
-```
-1. /opsx:propose <nombre>                  # OpenSpec planifica
-2. /plan-creator <descripción>             # Essentials genera plan con exit criteria
-3. /plan-loop .claude/plans/<plan>.md      # Essentials ejecuta
-4. /opsx:archive                           # OpenSpec archiva
+1. /plan-creator <feature description>
+2. /plan-loop .claude/plans/<plan>.md       # or /plan-swarm or /plan-team
 ```
 
-## Flujo Multi-Sesión (Features grandes, >1 día)
-
+## Spec Flow (Features needing architectural design)
 ```
-1. /opsx:propose <nombre>                  # OpenSpec planifica
-2. /plan-creator <descripción>             # Essentials genera plan
-3. /beads-converter .claude/plans/<plan>.md # Convierte a Beads
-4. /beads-loop                             # Ejecuta con persistencia
-5. /opsx:archive                           # Archiva al completar
+1. /opsx:propose <name>                    # OpenSpec plans
+2. /plan-creator <description>             # Essentials generates plan with exit criteria
+3. /plan-loop .claude/plans/<plan>.md      # Essentials executes
+4. /opsx:archive                           # OpenSpec archives
 ```
-Beads persiste entre sesiones. Si se corta, `bd ready` muestra dónde quedaste.
 
-## Regla de Auditoría
+## Multi-Session Flow (Large features, >1 day)
+```
+1. /opsx:propose <name>                    # OpenSpec plans
+2. /plan-creator <description>             # Essentials generates plan
+3. /beads-converter .claude/plans/<plan>.md # Convert to Beads
+4. /beads-loop                             # Execute with persistence
+5. /opsx:archive                           # Archive on completion
+```
+Beads persists across sessions. If interrupted, `bd ready` shows where you left off.
 
-ANTES de cerrar cualquier tarea, delega al agente `code-auditor` para revisar los archivos `.py` modificados. No marques como completa hasta veredicto ✅.
+## Audit Rule
 
-## Cuándo usar cada modo
+BEFORE closing any task, delegate to the `code-auditor` agent to review modified `.py` files. Do NOT mark as complete until ✅ verdict.
 
-| Situación | Comando |
+## When to Use Each Mode
+
+| Situation | Command |
 |-----------|---------|
-| Fix rápido discutido en chat | `/implement-loop` |
-| Feature con plan | `/plan-loop` o `/plan-swarm` |
-| Feature con specs arquitectónicas | OpenSpec + `/plan-loop` |
-| Feature >1 sesión | OpenSpec + `/beads-converter` + `/beads-loop` |
-| Tareas paralelas independientes | `/plan-swarm` o `/beads-swarm` |
-| Build multi-componente (frontend+backend+db) | `/plan-team` |
+| Quick fix discussed in chat | `/implement-loop` |
+| Feature with plan | `/plan-loop` or `/plan-swarm` |
+| Feature with architectural specs | OpenSpec + `/plan-loop` |
+| Feature >1 session | OpenSpec + `/beads-converter` + `/beads-loop` |
+| Independent parallel tasks | `/plan-swarm` or `/beads-swarm` |
+| Multi-component build (frontend+backend+db) | `/plan-team` |
