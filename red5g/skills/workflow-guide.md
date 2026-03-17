@@ -5,52 +5,56 @@ description: "Development workflow guide for the team. Explains when and how to 
 
 # Workflow Guide — OpenSpec + Essentials + Beads
 
-## Quick Flow (80% of tasks)
-
-For bugs, fixes, or tasks discussed in chat:
+## Fix / Small Task (no planning needed)
 ```
 /implement-loop <task description>
 ```
-Essentials implements, runs tests, and loops until exit criteria pass. For independent parallel tasks use `/implement-swarm`. For multi-component builds use `/implement-team`.
 
-## Plan Flow (Medium features)
+If you need to investigate first:
 ```
-1. /plan-creator <feature description>
-2. /plan-loop .claude/plans/<plan>.md       # or /plan-swarm or /plan-team
-```
-
-## Spec Flow (Features needing architectural design)
-```
-1. /opsx:explore                                                    # Investigate the problem
-2. /opsx:propose <name>                                             # OpenSpec generates proposal, specs, design, tasks
-3. /plan-creator Implement <name> based on openspec/changes/<name>/ # Essentials generates plan with exit criteria
-4. /plan-loop .claude/plans/<plan>.md                               # Essentials executes (auditor runs per task)
-5. /opsx:archive                                                    # OpenSpec archives
+/opsx:explore
+/implement-loop <fix based on what we found>
 ```
 
-The key is passing the OpenSpec change folder to `/plan-creator` so it reads the proposal, specs, and design as context. Essentials generates its own plan with Dependency Graph, exit criteria, and per-file implementation code.
+## Feature (needs architectural planning)
+```
+/opsx:explore                          # Investigate the problem
+/opsx:propose <name>                   # OpenSpec generates proposal, specs, design, tasks
+/plan-from-spec                        # Auto-detects OpenSpec change, generates Essentials plan
+/plan-loop .claude/plans/<plan>.md     # Executes with exit criteria (auditor runs per task)
+/opsx:archive                          # Archives specs
+```
 
-## Multi-Session Flow (Large features, >1 day)
+For parallel execution use `/plan-swarm` instead of `/plan-loop`.
+For multi-component builds use `/plan-team` instead of `/plan-loop`.
+
+## Feature Multi-Session (>1 day)
 ```
-1. /opsx:explore                                                    # Investigate
-2. /opsx:propose <name>                                             # OpenSpec plans
-3. /plan-creator Implement <name> based on openspec/changes/<name>/ # Essentials generates plan
-4. /beads-converter .claude/plans/<plan>.md                         # Convert to Beads for persistence
-5. /beads-loop                                                      # Execute with persistence
-6. /opsx:archive                                                    # Archive on completion
+/opsx:explore                          # Investigate
+/opsx:propose <name>                   # OpenSpec plans
+/plan-from-spec                        # Generates Essentials plan from OpenSpec
+/beads-converter .claude/plans/<plan>.md   # Converts to Beads for persistence
+/beads-loop                            # Executes with persistence
+/opsx:archive                          # Archives on completion
 ```
+
+If session is interrupted, `bd ready` shows where you left off next time.
+
+## Quick Reference
+
+| Situation | Flow |
+|-----------|------|
+| Quick fix, clear context | `/implement-loop` |
+| Fix that needs investigation | `/opsx:explore` → `/implement-loop` |
+| Feature with planning | `/opsx:explore` → `/opsx:propose` → `/plan-from-spec` → `/plan-loop` → `/opsx:archive` |
+| Feature >1 session | Same as above but `/beads-converter` → `/beads-loop` instead of `/plan-loop` |
+| Parallel independent tasks | Use `/plan-swarm` or `/beads-swarm` instead of loop |
+| Multi-component build | Use `/plan-team` instead of loop |
 
 ## Audit Rule
 
-BEFORE closing any task, delegate to the `code-auditor` agent to review modified `.py` files. Do NOT mark as complete until ✅ verdict.
+BEFORE closing any task, delegate to the `code-auditor` agent to review modified `.py` files. Do NOT mark as complete until ✅ verdict. This is enforced by the `python-standards` skill.
 
-## When to Use Each Mode
+## After Every Important Feature
 
-| Situation | Command |
-|-----------|---------|
-| Quick fix discussed in chat | `/implement-loop` |
-| Feature with plan | `/plan-loop` or `/plan-swarm` |
-| Feature with architectural specs | OpenSpec + `/plan-loop` |
-| Feature >1 session | OpenSpec + `/beads-converter` + `/beads-loop` |
-| Independent parallel tasks | `/plan-swarm` or `/beads-swarm` |
-| Multi-component build (frontend+backend+db) | `/plan-team` |
+Update `CLAUDE.md` section "Notes for AI" with architectural decisions that future sessions must know (e.g., "Use SDK X, never direct HTTP calls").
