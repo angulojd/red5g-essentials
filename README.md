@@ -9,20 +9,14 @@ Plugin empresarial de estándares para backends Python serverless en AWS.
 | `agents/code-auditor.md` | Auditor de calidad con 7 pilares (KISS, SOLID, PEP 8, Docstrings, Seguridad, Guard Clauses, Error Handling) |
 | `agents/git-flow.md` | Automatización de Git Flow (branching, merging, releases, PRs) |
 | `skills/python-standards.md` | Reglas globales de código, se activa automáticamente en todo `.py` |
-| `skills/workflow-guide.md` | Guía de cómo usar OpenSpec + Essentials + Beads juntos |
+| `skills/workflow-guide.md` | Guía de flujos de trabajo: OpenSpec + Essentials + Beads |
 | `hooks/ruff-gate.py` | Hook PostToolUse que bloquea escritura si ruff check/format falla |
-| `commands/audit.md` | `/audit` — atajo para ejecutar code-auditor sobre archivos modificados |
-| `commands/apply-audited.md` | `/apply-audited` — ejecuta OpenSpec apply con auditoría obligatoria por tarea |
+| `commands/audit.md` | `/audit` — ejecuta code-auditor sobre archivos modificados |
+| `commands/apply-audited.md` | `/apply-audited` — OpenSpec apply con auditoría obligatoria por tarea |
+| `commands/plan-from-spec.md` | `/plan-from-spec` — detecta el cambio activo de OpenSpec y genera plan Essentials automáticamente |
 | `scripts/setup.sh` | Inicialización de proyecto nuevo con un solo comando |
 
 ## Instalación
-
-### Plugin (una vez por desarrollador)
-```bash
-# Dentro de Claude Code:
-/plugin marketplace add angulojd/red5g-essentials
-/plugin install red5g
-```
 
 ### Plugins requeridos (una vez por desarrollador)
 ```bash
@@ -106,40 +100,51 @@ Model (SQLAlchemy ORM)     Schema (Pydantic v2 API)
 
 ## Flujos de Trabajo
 
-### Tarea rápida (80% del trabajo diario)
+### Fix / Tarea pequeña (sin planificación)
 ```
-/implement-loop fix the auth bug we discussed
-```
-
-### Feature con plan
-```
-/plan-creator Add JWT authentication
-/plan-loop .claude/plans/jwt-auth-plan.md
+/implement-loop <descripción de la tarea>
 ```
 
-### Feature con specs arquitectónicas
+Si necesitas investigar primero:
 ```
-/opsx:propose add-authentication
-/plan-creator Add authentication
-/plan-loop .claude/plans/auth-plan.md
-/opsx:archive
+/opsx:explore
+/implement-loop <fix basado en lo que encontramos>
 ```
+
+### Feature (necesita planificación arquitectónica)
+```
+/opsx:explore                          # Investiga el problema
+/opsx:propose <nombre>                 # OpenSpec genera proposal, specs, design, tasks
+/plan-from-spec                        # Auto-detecta el cambio de OpenSpec, genera plan Essentials
+/plan-loop .claude/plans/<plan>.md     # Ejecuta con exit criteria (auditor se invoca por tarea)
+/opsx:archive                          # Archiva las specs
+```
+
+Para ejecución paralela usa `/plan-swarm` en vez de `/plan-loop`.
+Para builds multi-componente usa `/plan-team` en vez de `/plan-loop`.
 
 ### Feature multi-sesión (>1 día)
 ```
-/opsx:propose platform-redesign
-/plan-creator Platform redesign
-/beads-converter .claude/plans/platform-plan.md
-/beads-loop
-/opsx:archive
+/opsx:explore                              # Investiga
+/opsx:propose <nombre>                     # OpenSpec planifica
+/plan-from-spec                            # Genera plan Essentials desde OpenSpec
+/beads-converter .claude/plans/<plan>.md   # Convierte a Beads para persistencia
+/beads-loop                                # Ejecuta con persistencia
+/opsx:archive                              # Archiva al completar
 ```
 
-### OpenSpec con auditoría forzada
-```
-/opsx:propose add-feature
-/apply-audited
-/opsx:archive
-```
+Si la sesión se interrumpe, `bd ready` muestra dónde quedaste.
+
+### Referencia rápida
+
+| Situación | Flujo |
+|-----------|-------|
+| Fix rápido, contexto claro | `/implement-loop` |
+| Fix que necesita investigar | `/opsx:explore` → `/implement-loop` |
+| Feature con planificación | `/opsx:explore` → `/opsx:propose` → `/plan-from-spec` → `/plan-loop` → `/opsx:archive` |
+| Feature >1 sesión | Igual pero `/beads-converter` → `/beads-loop` en vez de `/plan-loop` |
+| Tareas paralelas independientes | `/plan-swarm` o `/beads-swarm` en vez de loop |
+| Build multi-componente | `/plan-team` en vez de loop |
 
 ### Auditoría manual
 ```
@@ -187,13 +192,17 @@ provider:
 
 En código, `config.py` las lee como variables de entorno via pydantic-settings. NUNCA llamar a Secrets Manager directamente en runtime.
 
+## Después de Cada Feature Importante
+
+Actualiza la sección "Notes for AI" del `CLAUDE.md` del proyecto con decisiones arquitectónicas que futuras sesiones deben conocer (ej: "Usar SDK X, nunca llamadas HTTP directas").
+
 ## Requisitos
 
 | Herramienta | ¿Requerida? | Propósito |
 |-------------|-------------|-----------|
 | ruff | Sí | Linting + formateo (hook bloqueante) |
-| OpenSpec | Recomendada | Planificación arquitectónica con specs |
 | Essentials plugin | Sí | Loops, swarms, teams con exit criteria |
+| OpenSpec | Recomendada | Planificación arquitectónica con specs |
 | Beads | Opcional | Memoria persistente entre sesiones |
 | tmux | Opcional | Solo para modo `/plan-team` |
 
