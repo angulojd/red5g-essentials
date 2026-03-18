@@ -128,7 +128,8 @@ export async function initCommand(options) {
   log.step(step, totalSteps, "Instalando plugin red5g...");
 
   const claudeDir = join(cwd, ".claude");
-  mkdirSync(join(claudeDir, "plans"), { recursive: true });
+  mkdirSync(join(claudeDir, "plans", "archive"), { recursive: true });
+  mkdirSync(join(claudeDir, "fixes"), { recursive: true });
   mkdirSync(join(claudeDir, "agent-memory", "code-auditor"), { recursive: true });
 
   const cmdCount = copyPluginFiles(join(PLUGIN_DIR, "commands"), join(claudeDir, "commands"));
@@ -154,6 +155,9 @@ export async function initCommand(options) {
           "mcp__ide__getDiagnostics",
           "mcp__ide__executeCode"
         ],
+      },
+      env: {
+        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
       },
       hooks: {
         PostToolUse: [
