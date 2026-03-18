@@ -1,0 +1,38 @@
+{
+  "name": "@red5g/cli",
+  "version": "1.0.0",
+  "description": "CLI para instalar el flujo de trabajo red5g-essentials — estándares empresariales para backends Python serverless en AWS con Claude Code",
+  "type": "module",
+  "bin": {
+    "red5g": "./bin/red5g.js"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "keywords": [
+    "claude-code",
+    "openspec",
+    "python",
+    "serverless",
+    "aws",
+    "standards",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/angulojd/red5g-essentials.git",
+    "directory": "cli"
+  },
+  "author": "angulojd",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "@inquirer/prompts": "^7.2.0",
+    "chalk": "^5.4.1",
+    "ora": "^8.1.1"
+  }
+}
