@@ -2,7 +2,11 @@
 
 CLI para instalar y configurar el flujo de trabajo **red5g-essentials** para Claude Code.
 
-Integra **OpenSpec** (planificación) + **Essentials** (ejecución) + **auditor de calidad** + **ruff** en 5 comandos simples.
+Integra **OpenSpec** (planificación) + **Essentials** (ejecución) + **auditor de calidad** + **ruff** + **ClickUp MCP** en 7 comandos simples.
+
+<p align="center">
+  <img src="docs/images/red5g_workflow_diagram_v2.svg" alt="red5g workflow diagram" width="800">
+</p>
 
 ## Instalación rápida
 
@@ -18,7 +22,8 @@ npx @red5g/cli init --template backend-mysql --scaffold
 | **OpenSpec** | Planificación con specs (`/opsx:explore`, `/opsx:propose`, `/opsx:archive`) |
 | **ruff** | Linter + formatter de Python (hook bloqueante) |
 | **Beads** | Memoria persistente entre sesiones (opcional) |
-| **Plugin red5g** | 6 commands + 2 agents + 2 skills + 1 hook en `.claude/` |
+| **Plugin red5g** | 7 commands + 2 agents + 2 skills + 1 hook en `.claude/` |
+| **ClickUp MCP** | Conexión directa a ClickUp para leer/escribir tareas (`.mcp.json`) |
 | **CLAUDE.md** | Guía del proyecto para Claude Code |
 | **Scaffold** | Estructura de carpetas con archivos base (opcional) |
 
@@ -48,7 +53,7 @@ npx @red5g/cli init -t backend-mysql -s --skip-tools
 npx @red5g/cli doctor
 ```
 
-Verifica: Node ≥20.19, git, Claude Code, OpenSpec, ruff, Beads, tmux, repo git, CLAUDE.md, pyproject.toml, plugin instalado.
+Verifica: Node ≥20.19, git, Claude Code, OpenSpec, ruff, Beads, tmux, repo git, CLAUDE.md, pyproject.toml, ClickUp MCP, plugin instalado.
 
 ### `red5g update`
 
@@ -62,8 +67,14 @@ npx @red5g/cli update --force # Sin preguntar
 Después de `init`, dentro de Claude Code:
 
 ```
-# Features (planificación completa)
+# Feature desde cero
 /rg:explore <qué investigar>
+/rg:plan <nombre del feature>
+/rg:execute
+/rg:archive
+
+# Feature desde HU del PM
+/rg:feasibility <hu.md o URL de ClickUp>
 /rg:plan <nombre del feature>
 /rg:execute
 /rg:archive
@@ -79,11 +90,13 @@ Después de `init`, dentro de Claude Code:
 
 | Comando | Por debajo |
 |---------|-----------|
+| `/rg:feasibility` | Lee HU + codebase → genera `feasibility.md` → postea feedback en ClickUp |
 | `/rg:explore` | → `/opsx:explore` — investiga el codebase |
-| `/rg:plan` | → `/opsx:propose` → plan Essentials → genera tests pytest → pausa para aprobación |
+| `/rg:plan` | Lee `exploration.md` o `feasibility.md` → `/opsx:propose` → plan Essentials → genera tests → pausa para aprobación |
 | `/rg:execute` | → `/plan-loop` con exit criteria = pytest + ruff, auditor por tarea |
 | `/rg:archive` | → `/opsx:archive` — archiva specs |
 | `/rg:fix` | → investigación rápida → `/implement-loop` con ruff como exit criteria + auditor |
+| `/rg:audit` | → delega al agente `code-auditor` para revisión de calidad |
 
 ## Después de init
 
