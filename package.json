@@ -1,6 +1,6 @@
 {
   "name": "@red5g/cli",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "CLI para instalar el flujo de trabajo red5g-essentials — estándares empresariales para backends Python serverless en AWS con Claude Code",
   "type": "module",
   "bin": {

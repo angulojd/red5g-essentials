@@ -55,7 +55,7 @@ export async function initCommand(options) {
   log.header("red5g init");
 
   const cwd = process.cwd();
-  const totalSteps = options.skipTools ? 5 : 8;
+  const totalSteps = options.skipTools ? 6 : 9;
   let step = 0;
 
   // ─── Paso 1: Git ───
@@ -128,7 +128,8 @@ export async function initCommand(options) {
   log.step(step, totalSteps, "Instalando plugin red5g...");
 
   const claudeDir = join(cwd, ".claude");
-  mkdirSync(join(claudeDir, "plans"), { recursive: true });
+  mkdirSync(join(claudeDir, "plans", "archive"), { recursive: true });
+  mkdirSync(join(claudeDir, "fixes"), { recursive: true });
   mkdirSync(join(claudeDir, "agent-memory", "code-auditor"), { recursive: true });
 
   const cmdCount = copyPluginFiles(join(PLUGIN_DIR, "commands"), join(claudeDir, "commands"));
@@ -152,8 +153,12 @@ export async function initCommand(options) {
           "Write(.claude/plans/*)",
           "Edit(.claude/plans/*)",
           "mcp__ide__getDiagnostics",
-          "mcp__ide__executeCode"
+          "mcp__ide__executeCode",
+          "mcp__clickup__*"
         ],
+      },
+      env: {
+        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
       },
       hooks: {
         PostToolUse: [
@@ -254,13 +259,37 @@ export async function initCommand(options) {
     }
   }
 
+  // ─── Paso: ClickUp MCP ───
+  step++;
+  log.step(step, totalSteps, "Configurando ClickUp MCP...");
+
+  const mcpPath = join(cwd, ".mcp.json");
+  if (!existsSync(mcpPath)) {
+    const mcpConfig = {
+      mcpServers: {
+        clickup: {
+          type: "http",
+          url: "https://mcp.clickup.com/mcp",
+        },
+      },
+    };
+    writeFileSync(mcpPath, JSON.stringify(mcpConfig, null, 2));
+    log.success(".mcp.json creado (ClickUp MCP conectado)");
+  } else {
+    log.info(".mcp.json ya existe — se mantiene");
+  }
+
   // ─── Resumen final ───
   log.header("✅ Proyecto inicializado");
   log.blank();
   console.log(chalk.white("  Flujo de trabajo instalado:"));
   console.log(chalk.dim("  /rg:explore → /rg:plan → /rg:execute → /rg:archive  (features)"));
+  console.log(chalk.dim("  /rg:feasibility <hu.md>                               (validar HU del PM)"));
   console.log(chalk.dim("  /rg:fix <descripción>                                (bugs rápidos)"));
   console.log(chalk.dim("  /rg:audit                                            (auditoría manual)"));
+  log.blank();
+  console.log(chalk.white("  Integración:"));
+  console.log(chalk.dim("  ClickUp MCP conectado → Claude Code puede leer/escribir tareas"));
   log.blank();
   console.log(chalk.white("  Falta un paso (dentro de Claude Code):"));
   console.log(chalk.cyan("  /plugin marketplace add GantisStorm/essentials-claude-code"));
