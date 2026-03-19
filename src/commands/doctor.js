@@ -125,6 +125,12 @@ export async function doctorCommand() {
     return "";
   }));
 
+  inc(check("ClickUp MCP (.mcp.json)", () => {
+    const mcpPath = join(cwd, ".mcp.json");
+    if (!existsSync(mcpPath)) throw new Error("No encontrado — ejecuta: npx @red5g/cli init");
+    return "";
+  }));
+
   // ─── Plugin red5g ───
   log.blank();
   console.log(chalk.bold("  Plugin red5g"));
