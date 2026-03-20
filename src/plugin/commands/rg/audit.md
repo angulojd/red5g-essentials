@@ -3,22 +3,22 @@ name: audit
 description: "Run code quality audit on Python files. Delegates to the code-auditor agent."
 ---
 
-Ejecuta una auditoría de calidad sobre los archivos Python especificados.
+Run a code quality audit on the specified Python files.
 
-## Uso
+## Usage
 
 ```
-/rg:audit <archivo_o_carpeta>
+/rg:audit <file_or_folder>
 ```
 
-## Comportamiento
+## Behavior
 
-1. Si se pasa un archivo `.py`, audita solo ese archivo.
-2. Si se pasa una carpeta, audita todos los `.py` dentro.
-3. Si no se pasa argumento, audita todos los archivos `.py` modificados en git (`git diff --name-only --diff-filter=ACMR HEAD`).
+1. If a `.py` file is passed, audit only that file.
+2. If a folder is passed, audit all `.py` files inside it.
+3. If no argument is passed, audit all `.py` files modified in git (`git diff --name-only --diff-filter=ACMR HEAD`).
 
-## Ejecución
+## Execution
 
-Delega al agente `code-auditor` pasando los archivos identificados. El agente genera un reporte estructurado con veredicto de commit.
+Delegate to the `code-auditor` agent with the identified files. The agent produces a structured report with a commit verdict.
 
-**Instrucción:** Invoca el agente `code-auditor` con los archivos que el usuario especificó. Si no especificó archivos, primero ejecuta `git diff --name-only --diff-filter=ACMR HEAD` para obtener los archivos `.py` modificados, luego pásalos al agente.
+**Instruction:** Invoke the `code-auditor` agent with the files the user specified. If no files were specified, first run `git diff --name-only --diff-filter=ACMR HEAD` to get the modified `.py` files, then pass them to the agent.
