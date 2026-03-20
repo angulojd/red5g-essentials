@@ -55,54 +55,7 @@ Based on what exists vs what's missing, estimate:
 
 Include test writing time (using the red5g flow: /rg:plan generates tests, /rg:execute loops until they pass).
 
-### Phase 5: Persist Findings
-
-Write `openspec/feasibility/<hu-name>/feasibility.md` with:
-
-```markdown
-# Feasibility: <HU title>
-
-**Date:** <current date>
-**HU Source:** <file path, ClickUp task URL, or "pasted">
-**Verdict:** ✅ Viable | ⚠️ Viable con condiciones | ❌ No viable
-
-## Resumen
-<2-3 oraciones con la evaluacion general>
-
-## Componentes Existentes
-- `src/models/user.py` — modelo User ya existe con campos requeridos
-
-## Componentes Faltantes
-- `src/controllers/report_controller.py` — no existe, hay que crearlo
-
-## Campos Nuevos Requeridos
-- `User.last_export_date` — no existe en el modelo actual
-
-## Dependencias Externas
-- Libreria X no esta en requirements.txt
-
-## Riesgos Tecnicos
-- <riesgo 1>
-
-## Condiciones (si aplica)
-- <condicion para que sea viable>
-
-## Estimacion
-- **Esfuerzo total:** X dias (con tests incluidos)
-- **Desglose:**
-  - Model + migration: X horas
-  - Service: X horas
-  - Controller + handler: X horas
-  - Tests: X horas
-
-## Preguntas para el PM
-- ❓ <pregunta que el dev necesita que el PM responda>
-
-## Feedback para el PM
-<Que ajustar en la HU, que falta definir, que dependencias necesitan aprobacion>
-```
-
-### Phase 6: Sync to ClickUp (if MCP available)
+### Phase 5: Sync to ClickUp (if MCP available)
 
 If ClickUp MCP tools are available AND the HU came from a ClickUp task:
 
@@ -118,7 +71,6 @@ If ClickUp MCP tools are available AND the HU came from a ClickUp task:
 
    [Si hay preguntas para el PM, listarlas aqui]
 
-   📄 Reporte completo en el repo: openspec/feasibility/<n>/feasibility.md
    ```
 
 2. **Update task status:**
@@ -132,7 +84,7 @@ If ClickUp MCP tools are available AND the HU came from a ClickUp task:
 If ClickUp MCP is NOT available:
 - Tell the dev: "ClickUp MCP no conectado. Ejecuta: `claude mcp add --transport http clickup https://mcp.clickup.com/mcp` y luego `/mcp` para autenticar. Por ahora, copia el feedback manualmente."
 
-### Phase 7: Present to Dev
+### Phase 6: Present to Dev
 
 ```
 ## 📋 Feasibility Report: <HU title>
@@ -142,8 +94,6 @@ Effort: <estimate>
 Missing: <count> components
 Risks: <count>
 ClickUp: ✅ Comentario + status actualizado | ⚠️ MCP no conectado
-
-Full report: openspec/feasibility/<n>/feasibility.md
 
 Next:
 - ✅ "Plan it" → /rg:plan <n>

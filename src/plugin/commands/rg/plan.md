@@ -10,30 +10,19 @@ Full planning pipeline. Orchestrates OpenSpec + Essentials + test generation in 
 
 - Verify `openspec/` directory exists. If not → "Run `openspec init --tools claude` first."
 - Verify `/plan-creator` is available (Essentials plugin). If not → "Install Essentials: `/plugin marketplace add GantisStorm/essentials-claude-code` then `/plugin install essentials@essentials-claude-code`."
-- Verify prior context exists (one of these):
-  - `openspec/changes/<n>/exploration.md` (from `/rg:explore`)
-  - OR `openspec/feasibility/<n>/feasibility.md` (from `/rg:feasibility`)
-  - If neither found → "Run `/rg:explore <description>` or `/rg:feasibility <hu-file>` first."
+- Verify that `/rg:explore` or `/rg:feasibility` was run first. If the user hasn't done either → "Run `/rg:explore <description>` or `/rg:feasibility <hu-file>` first."
 
 ## Instructions
 
-### Phase 1: Load Prior Context
+### Phase 1: OpenSpec Proposal (MANDATORY)
 
-1. Check for `exploration.md` OR `feasibility.md`:
-   - If `exploration.md` exists → load it (came from /rg:explore)
-   - If `feasibility.md` exists → load it (came from /rg:feasibility with HU from PM)
-   - If both exist → load both
-
-### Phase 2: OpenSpec Proposal
-
-1. Run `/opsx:propose` with the user's feature name/description. Include key findings from the prior context.
-2. Wait for OpenSpec to generate: `proposal.md`, `specs/`, `design.md`, `tasks.md` in `openspec/changes/<n>/`.
+1. You MUST invoke `/opsx:propose` with the user's feature name/description. Include key findings from the prior context. This step is non-negotiable — do NOT skip it, create the artifacts yourself, or substitute it with manual file creation.
+2. `/opsx:propose` is responsible for generating: `proposal.md`, `specs/`, `design.md`, `tasks.md` in `openspec/changes/<n>/`. Wait for it to complete.
 3. Show the user a brief summary of what was proposed.
 
-### Phase 3: Essentials Plan
+### Phase 2: Essentials Plan
 
 1. Read all artifacts from `openspec/changes/<n>/`:
-   - `exploration.md` or `feasibility.md` (prior context)
    - `proposal.md`
    - `tasks.md`
    - All files in `specs/` (if exists)
@@ -44,7 +33,7 @@ Full planning pipeline. Orchestrates OpenSpec + Essentials + test generation in 
 
 3. The plan will be created in `.claude/plans/` with Dependency Graph and exit criteria.
 
-### Phase 4: Generate Tests (Delegated)
+### Phase 3: Generate Tests (Delegated)
 
 **Delegate to the `test-generator` agent.** Do NOT generate tests yourself.
 
@@ -52,14 +41,13 @@ The agent runs with its own context window, reads specs and plan from disk, gene
 
 Wait for the agent to complete and return its summary.
 
-### Phase 5: Present for Approval
+### Phase 4: Present for Approval
 
 Show the user a summary:
 
 ```
 ## 📋 Plan Summary
 
-### Context Source: exploration.md | feasibility.md
 ### OpenSpec Change: <n>
 - Proposal: openspec/changes/<n>/proposal.md
 - Specs: X spec files
