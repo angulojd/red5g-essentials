@@ -51,7 +51,7 @@ npm install -g @beads/bd
 ```bash
 mkdir mi-proyecto && cd mi-proyecto
 git init
-npx @red5g/cli init
+npx @red5g/cli@latest init
 ```
 
 El asistente te preguntará qué template usar y si quieres scaffold.
@@ -59,7 +59,7 @@ El asistente te preguntará qué template usar y si quieres scaffold.
 ### 5. Verificar el entorno
 
 ```bash
-npx @red5g/cli doctor
+npx @red5g/cli@latest doctor
 ```
 
 ### 6. Listo — usa el workflow
@@ -81,7 +81,7 @@ Si ya tienes Node.js ≥20.19, Python 3 y Claude Code:
 
 ```bash
 mkdir mi-proyecto && cd mi-proyecto
-npx @red5g/cli init --template backend-mysql --scaffold
+npx @red5g/cli@latest init --template backend-mysql --scaffold
 ```
 
 ## Qué instala
@@ -101,23 +101,23 @@ npx @red5g/cli init --template backend-mysql --scaffold
 ### `red5g init`
 
 ```bash
-npx @red5g/cli init                              # Interactivo
-npx @red5g/cli init --template backend-mysql -s   # Directo con scaffold
-npx @red5g/cli init -t backend-mysql -s -y        # Sin preguntas
-npx @red5g/cli init --skip-tools                  # Sin instalar herramientas
+npx @red5g/cli@latest init                              # Interactivo
+npx @red5g/cli@latest init --template backend-mysql -s   # Directo con scaffold
+npx @red5g/cli@latest init -t backend-mysql -s -y        # Sin preguntas
+npx @red5g/cli@latest init --skip-tools                  # Sin instalar herramientas
 ```
 
 ### `red5g doctor`
 
 ```bash
-npx @red5g/cli doctor
+npx @red5g/cli@latest doctor
 ```
 
 ### `red5g update`
 
 ```bash
-npx @red5g/cli update        # Actualiza commands/agents/skills/hooks
-npx @red5g/cli update --force # Sin preguntar
+npx @red5g/cli@latest update        # Actualiza commands/agents/skills/hooks
+npx @red5g/cli@latest update --force # Sin preguntar
 ```
 
 ## Flujo de trabajo

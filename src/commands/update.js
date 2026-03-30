@@ -37,7 +37,7 @@ export async function updateCommand(options) {
 
   if (!existsSync(claudeDir)) {
     log.error("No se encontró .claude/ en este directorio.");
-    log.info("¿Querías ejecutar " + chalk.cyan("npx @red5g/cli init") + "?");
+    log.info("¿Querías ejecutar " + chalk.cyan("npx @red5g/cli@latest init") + "?");
     process.exit(1);
   }
 

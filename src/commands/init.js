@@ -309,6 +309,6 @@ export async function initCommand(options) {
   console.log(chalk.dim("  ClickUp MCP → Claude Code puede leer/escribir tareas"));
   log.blank();
   console.log(chalk.white("  Verifica tu entorno:"));
-  console.log(chalk.cyan("  npx @red5g/cli doctor"));
+  console.log(chalk.cyan("  npx @red5g/cli@latest doctor"));
   log.blank();
 }
