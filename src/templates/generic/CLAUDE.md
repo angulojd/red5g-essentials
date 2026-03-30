@@ -2,7 +2,8 @@
 # 🤖 Development Guide — [PROJECT NAME]
 
 > **EDIT THIS FILE** with your project-specific information.
-> Global coding rules are automatically injected via the red5g-essentials plugin.
+> Global coding rules are in `.claude/skills/python-standards/SKILL.md`.
+> Workflow guide is in `.claude/skills/workflow-guide/SKILL.md`.
 
 ## 🏗️ Architecture
 - **Infrastructure:** [Describe]

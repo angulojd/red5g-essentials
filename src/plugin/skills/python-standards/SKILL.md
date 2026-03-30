@@ -47,7 +47,7 @@ These rules are NON-NEGOTIABLE. They apply to ALL company Python projects. Also 
 
 ### Quality Workflow (MANDATORY)
 - PostToolUse hook runs `ruff check` + `ruff format --check` on every Write/Edit of `.py`. Blocks if fails.
-- **BEFORE marking ANY task as complete** (whether via OpenSpec /opsx:explore, Essentials /plan-loop, or manual work), you MUST delegate to the `code-auditor` agent to review all modified `.py` files.
+- **BEFORE marking ANY task as complete** (whether via /rg:explore, /rg:execute, /rg:fix, or manual work), you MUST delegate to the `code-auditor` agent to review all modified `.py` files.
 - If code-auditor returns 🔴 Critical issues, you MUST fix them before closing the task.
 - Do NOT proceed to the next task until code-auditor gives ✅ verdict.
 - This is NON-NEGOTIABLE. Skipping the audit is equivalent to shipping broken code.

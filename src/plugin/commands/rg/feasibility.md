@@ -2,6 +2,8 @@
 name: feasibility
 description: "Validate a structured User Story (HU) against the real codebase. Reads the HU, analyzes existing code, and produces a feasibility report. If ClickUp MCP is connected, posts the report as a comment and updates the task status automatically."
 argument-hint: <path to HU file or ClickUp task URL/ID>
+category: Workflow
+tags: [workflow, feasibility]
 ---
 
 Validate a structured HU against the real codebase and produce a feasibility report.
@@ -9,7 +11,7 @@ Validate a structured HU against the real codebase and produce a feasibility rep
 ## Pre-flight
 
 - Verify the user provided a path to an HU file, pasted HU text, or a ClickUp task ID/URL. If neither → "Provide the HU file path, paste the HU text, or give me the ClickUp task URL. Example: `/rg:feasibility docs/hu-export-reports.md` or `/rg:feasibility https://app.clickup.com/t/abc123`"
-- Check if ClickUp MCP tools are available (try listing tools with `mcp__clickup` prefix). Note availability for Phase 6.
+- Check if ClickUp MCP tools are available (try listing tools with `mcp__clickup` prefix). Note availability for Phase 5.
 
 ## Instructions
 
@@ -23,7 +25,7 @@ Validate a structured HU against the real codebase and produce a feasibility rep
 ### Phase 2: Read Project Context
 
 1. Read `CLAUDE.md` for architecture, stack, patterns, and project-specific rules.
-2. Read `openspec/specs/` for existing specifications (if any).
+2. Read `openspec/specs/` for existing canonical specifications (if any).
 3. Read `pyproject.toml` for project configuration.
 
 ### Phase 3: Analyze Codebase
@@ -53,52 +55,38 @@ Based on what exists vs what's missing, estimate:
 | New service + external integration | 2-3 dias |
 | New module/subsystem | 1 semana+ |
 
-Include test writing time (using the red5g flow: /rg:plan generates tests, /rg:execute loops until they pass).
-
 ### Phase 5: Sync to ClickUp (if MCP available)
 
 If ClickUp MCP tools are available AND the HU came from a ClickUp task:
 
-1. **Post comment** on the task with:
-   ```
-   🔍 Feasibility Report
-
-   Verdict: [verdict]
-   Esfuerzo estimado: [estimate]
-   Componentes existentes: [count]
-   Componentes faltantes: [count]
-   Riesgos: [count]
-
-   [Si hay preguntas para el PM, listarlas aqui]
-
-   ```
-
+1. **Post comment** on the task with the feasibility report
 2. **Update task status:**
-   - If verdict is ✅ Viable and no questions → move to "Aprobada"
-   - If verdict is ⚠️ Viable con condiciones → move to "Preguntas PM"
-   - If verdict is ❌ No viable → move to "Preguntas PM"
-
+   - If viable and no questions → move to "Aprobada"
+   - If viable with conditions → move to "Preguntas PM"
+   - If not viable → move to "Preguntas PM"
 3. **Add tag:** "hu-revisada-dev"
 4. **Remove tag:** "hu-funcional" (if present)
 
 If ClickUp MCP is NOT available:
-- Tell the dev: "ClickUp MCP no conectado. Ejecuta: `claude mcp add --transport http clickup https://mcp.clickup.com/mcp` y luego `/mcp` para autenticar. Por ahora, copia el feedback manualmente."
+- Tell the dev: "ClickUp MCP no conectado. Ejecuta: `claude mcp add --transport http clickup https://mcp.clickup.com/mcp` y luego `/mcp` para autenticar."
 
-### Phase 6: Present to Dev
+### Phase 6: Persist and Present
+
+Present the feasibility report to the dev. Do NOT create an OpenSpec change — this is validation only. The report lives in the session context and in ClickUp (if connected).
 
 ```
-## 📋 Feasibility Report: <HU title>
+## Feasibility Report: <HU title>
 
 Verdict: <verdict>
 Effort: <estimate>
 Missing: <count> components
 Risks: <count>
-ClickUp: ✅ Comentario + status actualizado | ⚠️ MCP no conectado
+ClickUp: Comentario + status actualizado | MCP no conectado
 
 Next:
-- ✅ "Plan it" → /rg:plan <n>
-- ⚠️ "Needs changes" → waiting for PM response in ClickUp
-- ❌ "Not viable" → blockers posted in ClickUp
+- "Plan it" → /rg:plan <name>
+- "Needs changes" → waiting for PM response in ClickUp
+- "Not viable" → blockers posted in ClickUp
 ```
 
 Do NOT proceed to planning. This is validation only.

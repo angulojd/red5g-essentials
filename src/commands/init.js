@@ -2,7 +2,7 @@ import { select, confirm } from "@inquirer/prompts";
 import ora from "ora";
 import chalk from "chalk";
 import {
-  existsSync, mkdirSync, cpSync, readFileSync, writeFileSync, readdirSync,
+  existsSync, mkdirSync, cpSync, readFileSync, writeFileSync, readdirSync, rmSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -55,7 +55,7 @@ export async function initCommand(options) {
   log.header("red5g init");
 
   const cwd = process.cwd();
-  const totalSteps = options.skipTools ? 6 : 9;
+  const totalSteps = options.skipTools ? 4 : 9;
   let step = 0;
 
   // ─── Paso 1: Git ───
@@ -119,18 +119,38 @@ export async function initCommand(options) {
     await installRuff();
 
     step++;
-    log.step(step, totalSteps, "Instalando Beads...");
+    log.step(step, totalSteps, "Instalando Beads (opcional)...");
     await installBeads();
   }
 
-  // ─── Paso 6: Copiar plugin (commands, agents, skills, hooks) ───
-  step++;
-  log.step(step, totalSteps, "Instalando plugin red5g...");
-
   const claudeDir = join(cwd, ".claude");
-  mkdirSync(join(claudeDir, "plans", "archive"), { recursive: true });
   mkdirSync(join(claudeDir, "fixes"), { recursive: true });
   mkdirSync(join(claudeDir, "agent-memory", "code-auditor"), { recursive: true });
+
+  // ─── Paso 6: OpenSpec init + Beads init (ANTES del plugin para que podamos sobrescribir) ───
+  if (!options.skipTools) {
+    step++;
+    log.step(step, totalSteps, "Inicializando OpenSpec en el proyecto...");
+
+    if (!existsSync(join(cwd, "openspec"))) {
+      await initOpenSpec(cwd);
+    } else {
+      log.info("OpenSpec ya inicializado en este proyecto");
+    }
+
+    step++;
+    log.step(step, totalSteps, "Inicializando Beads...");
+
+    if (!existsSync(join(cwd, ".beads"))) {
+      await initBeads(cwd);
+    } else {
+      log.info("Beads ya inicializado en este proyecto");
+    }
+  }
+
+  // ─── Paso 7: Copiar plugin red5g (DESPUÉS de OpenSpec para sobrescribir /opsx:* con nuestras versiones) ───
+  step++;
+  log.step(step, totalSteps, "Instalando plugin red5g...");
 
   const cmdCount = copyPluginFiles(join(PLUGIN_DIR, "commands"), join(claudeDir, "commands"));
   const agentCount = copyPluginFiles(join(PLUGIN_DIR, "agents"), join(claudeDir, "agents"));
@@ -139,28 +159,49 @@ export async function initCommand(options) {
 
   log.success(`Plugin instalado: ${cmdCount} commands, ${agentCount} agents, ${skillCount} skills, ${hookCount} hooks`);
 
+  // ─── Limpiar skills duplicadas de OpenSpec (nuestros comandos /opsx:* ya las reemplazan) ───
+  const skillsDir = join(claudeDir, "skills");
+  if (existsSync(skillsDir)) {
+    for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name.startsWith("openspec-")) {
+        try {
+          rmSync(join(skillsDir, entry.name), { recursive: true, force: true });
+        } catch { /* ignorar si falla */ }
+      }
+    }
+  }
+
   // ─── settings.json ───
   const settingsPath = join(claudeDir, "settings.json");
   if (!existsSync(settingsPath)) {
     const settings = {
       permissions: {
         allow: [
-          "Bash(bd:*)",
           "Bash(openspec:*)",
+          "Bash(red5g:*)",
+          "Bash(bd:*)",
           "Bash(ruff:*)",
           "Bash(gh:*)",
           "Bash(pytest:*)",
-          "Write(.claude/plans/*)",
-          "Edit(.claude/plans/*)",
+          "Write(openspec/*)",
+          "Edit(openspec/*)",
           "mcp__ide__getDiagnostics",
           "mcp__ide__executeCode",
           "mcp__clickup__*"
         ],
       },
-      env: {
-        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-      },
       hooks: {
+        PreToolUse: [
+          {
+            matcher: "Bash",
+            hooks: [
+              {
+                type: "command",
+                command: "python3 .claude/hooks/pre-commit-gate.py",
+              },
+            ],
+          },
+        ],
         PostToolUse: [
           {
             matcher: "Write|Edit|MultiEdit",
@@ -224,13 +265,6 @@ export async function initCommand(options) {
     log.success(".gitignore creado");
   }
 
-  // AGENTS.md (para Beads)
-  const agentsMdSrc = join(templateDir, "AGENTS.md");
-  if (existsSync(agentsMdSrc) && !existsSync(join(cwd, "AGENTS.md"))) {
-    writeFileSync(join(cwd, "AGENTS.md"), readFileSync(agentsMdSrc, "utf-8"));
-    log.success("AGENTS.md creado");
-  }
-
   // ─── Scaffold ───
   if (scaffold && tmpl.hasScaffold) {
     const scaffoldDir = join(templateDir, "scaffold");
@@ -241,25 +275,7 @@ export async function initCommand(options) {
     }
   }
 
-  // ─── Paso 8: OpenSpec init + Beads init ───
-  if (!options.skipTools) {
-    step++;
-    log.step(step, totalSteps, "Inicializando herramientas en el proyecto...");
-
-    if (!existsSync(join(cwd, "openspec"))) {
-      await initOpenSpec(cwd);
-    } else {
-      log.info("OpenSpec ya inicializado en este proyecto");
-    }
-
-    if (!existsSync(join(cwd, ".beads"))) {
-      await initBeads(cwd);
-    } else {
-      log.info("Beads ya inicializado en este proyecto");
-    }
-  }
-
-  // ─── Paso: ClickUp MCP ───
+  // ─── ClickUp MCP ───
   step++;
   log.step(step, totalSteps, "Configurando ClickUp MCP...");
 
@@ -280,7 +296,7 @@ export async function initCommand(options) {
   }
 
   // ─── Resumen final ───
-  log.header("✅ Proyecto inicializado");
+  log.header("Proyecto inicializado");
   log.blank();
   console.log(chalk.white("  Flujo de trabajo instalado:"));
   console.log(chalk.dim("  /rg:explore → /rg:plan → /rg:execute → /rg:archive  (features)"));
@@ -289,14 +305,8 @@ export async function initCommand(options) {
   console.log(chalk.dim("  /rg:audit                                            (auditoría manual)"));
   log.blank();
   console.log(chalk.white("  Integración:"));
-  console.log(chalk.dim("  ClickUp MCP conectado → Claude Code puede leer/escribir tareas"));
-  log.blank();
-  console.log(chalk.white("  Falta un paso (dentro de Claude Code):"));
-  console.log(chalk.cyan("  /plugin marketplace add GantisStorm/essentials-claude-code"));
-  console.log(chalk.cyan("  /plugin install essentials@essentials-claude-code"));
-  log.blank();
-  console.log(chalk.dim("  Essentials provee los motores de ejecución: /implement-loop,"));
-  console.log(chalk.dim("  /plan-loop, /plan-swarm, /plan-team que los comandos red5g usan internamente."));
+  console.log(chalk.dim("  OpenSpec → planificación spec-driven (openspec/)"));
+  console.log(chalk.dim("  ClickUp MCP → Claude Code puede leer/escribir tareas"));
   log.blank();
   console.log(chalk.white("  Verifica tu entorno:"));
   console.log(chalk.cyan("  npx @red5g/cli doctor"));

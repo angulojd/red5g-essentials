@@ -1,5 +1,5 @@
 ---
-name: explore
+name: "OPSX: Explore"
 description: "Enter explore mode - think through ideas, investigate problems, clarify requirements"
 category: Workflow
 tags: [workflow, explore, thinking]
@@ -11,7 +11,7 @@ Enter explore mode. Think deeply. Visualize freely. Follow the conversation wher
 
 **This is a stance, not a workflow.** There are no fixed steps, no required sequence, no mandatory outputs. You're a thinking partner helping the user explore.
 
-**Input**: The argument is whatever the user wants to think about. Could be:
+**Input**: The argument after `/opsx:explore` is whatever the user wants to think about. Could be:
 - A vague idea: "real-time collaboration"
 - A specific problem: "the auth system is getting unwieldy"
 - A change name: "add-dark-mode" (to explore in context of that change)
@@ -80,19 +80,12 @@ Depending on what the user brings, you might:
 
 ## OpenSpec Awareness
 
-You have full context of the OpenSpec system. Use it naturally, don't force it.
-
-### Check for context
-
 At the start, quickly check what exists:
 ```bash
 openspec list --json
 ```
 
-This tells you:
-- If there are active changes
-- Their names, schemas, and status
-- What the user might be working on
+This tells you if there are active changes, their names, schemas, and status.
 
 If the user mentioned a specific change name, read its artifacts for context.
 

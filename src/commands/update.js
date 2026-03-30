@@ -1,10 +1,11 @@
 import { confirm } from "@inquirer/prompts";
 import chalk from "chalk";
 import {
-  existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync,
+  existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 import { log } from "../utils/logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,13 +53,37 @@ export async function updateCommand(options) {
     }
   }
 
-  // ─── Actualizar plugin ───
+  // ─── Refrescar OpenSpec (ANTES del plugin para que podamos sobrescribir /opsx:*) ───
+  try {
+    execSync("command -v openspec", { stdio: "pipe" });
+    if (existsSync(join(cwd, "openspec"))) {
+      log.info("Refrescando comandos de OpenSpec...");
+      execSync("openspec init --tools claude", { cwd, stdio: "pipe" });
+      log.success("OpenSpec refrescado");
+    }
+  } catch {
+    log.warn("OpenSpec no disponible — se omite refresco de /opsx:*");
+  }
+
+  // ─── Copiar plugin red5g (sobrescribe /opsx:* con nuestras versiones) ───
   const cmdCount = copyDir(join(PLUGIN_DIR, "commands"), join(claudeDir, "commands"));
   const agentCount = copyDir(join(PLUGIN_DIR, "agents"), join(claudeDir, "agents"));
   const skillCount = copyDir(join(PLUGIN_DIR, "skills"), join(claudeDir, "skills"));
   const hookCount = copyDir(join(PLUGIN_DIR, "hooks"), join(claudeDir, "hooks"));
 
   log.success(`Actualizado: ${cmdCount} commands, ${agentCount} agents, ${skillCount} skills, ${hookCount} hooks`);
+
+  // ─── Limpiar skills duplicadas de OpenSpec ───
+  const skillsDir = join(claudeDir, "skills");
+  if (existsSync(skillsDir)) {
+    for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name.startsWith("openspec-")) {
+        try {
+          rmSync(join(skillsDir, entry.name), { recursive: true, force: true });
+        } catch { /* ignorar si falla */ }
+      }
+    }
+  }
 
   // ─── Verificar/reparar settings.json hooks ───
   const settingsPath = join(claudeDir, "settings.json");
@@ -94,11 +119,11 @@ export async function updateCommand(options) {
     }
   }
 
-  // ─── Recordatorio ───
-  log.blank();
-  console.log(chalk.dim("  Para actualizar Essentials (dentro de Claude Code):"));
-  console.log(chalk.dim("  /plugin marketplace update"));
-  console.log(chalk.dim("  /plugin update essentials@essentials-claude-code"));
+  // ─── Crear directorios que pueden faltar en proyectos v2 ───
+  mkdirSync(join(claudeDir, "fixes"), { recursive: true });
+  mkdirSync(join(cwd, "openspec", "specs"), { recursive: true });
+  mkdirSync(join(cwd, "openspec", "changes", "archive"), { recursive: true });
+
   log.blank();
   log.success("Plugin red5g actualizado");
 }
