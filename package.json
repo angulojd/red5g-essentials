@@ -1,7 +1,7 @@
 {
   "name": "@red5g/cli",
-  "version": "2.2.2",
-  "description": "CLI para instalar el flujo de trabajo red5g-essentials — estándares empresariales para backends Python serverless en AWS con Claude Code",
+  "version": "3.0.0",
+  "description": "CLI para instalar el flujo de trabajo red5g — planificación y ejecución nativa para backends Python serverless en AWS con Claude Code",
   "type": "module",
   "bin": {
     "red5g": "./bin/red5g.js"
@@ -15,7 +15,6 @@
   },
   "keywords": [
     "claude-code",
-    "openspec",
     "python",
     "serverless",
     "aws",
