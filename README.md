@@ -8,7 +8,99 @@ Integra **OpenSpec** (planificación) + **Essentials** (ejecución) + **auditor 
   <img src="docs/images/red5g_workflow_diagram_v2.svg" alt="red5g workflow diagram" width="800">
 </p>
 
+## Guía de instalación paso a paso
+
+Si ya tienes todo instalado, salta a [Instalación rápida](#instalación-rápida).
+
+### 1. Requisitos previos
+
+Instala Node.js (v20.19+) y Python 3 si no los tienes:
+
+```bash
+# macOS con Homebrew
+brew install node python3
+
+# Verificar versiones
+node -v   # debe ser ≥20.19
+python3 --version
+```
+
+> En Linux usa tu gestor de paquetes. En Windows usa [nvm-windows](https://github.com/coreybutler/nvm-windows) y [python.org](https://www.python.org/downloads/).
+
+### 2. Instalar Claude Code
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+Ejecuta `claude` y sigue las instrucciones de autenticación.
+
+### 3. Instalar herramientas globales
+
+El CLI las instala automáticamente durante `init`, pero si prefieres hacerlo manualmente:
+
+```bash
+# OpenSpec — motor de planificación (requerido)
+npm install -g @fission-ai/openspec@latest
+
+# ruff — linter y formatter de Python (requerido)
+curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+# Beads — memoria persistente entre sesiones (opcional)
+brew install beads
+```
+
+### 4. Crear el proyecto
+
+```bash
+mkdir mi-proyecto && cd mi-proyecto
+git init
+npx @red5g/cli init
+```
+
+El asistente te preguntará qué template usar y si quieres scaffold. Si alguna herramienta falta, intentará instalarla automáticamente.
+
+### 5. Verificar el entorno
+
+```bash
+npx @red5g/cli doctor
+```
+
+Revisa que todas las herramientas y archivos estén en su lugar.
+
+### 6. Instalar Essentials (dentro de Claude Code)
+
+Abre Claude Code en tu proyecto:
+
+```bash
+claude
+```
+
+Dentro de Claude Code, ejecuta estos dos comandos (una sola vez):
+
+```
+/plugin marketplace add GantisStorm/essentials-claude-code
+/plugin install essentials@essentials-claude-code
+```
+
+Essentials provee los motores de ejecución (`/implement-loop`, `/plan-loop`, `/plan-swarm`, `/plan-team`) que los comandos `/rg:*` usan internamente.
+
+### 7. Listo — usa el workflow
+
+Dentro de Claude Code:
+
+```
+/rg:explore <qué investigar>     # Investigar el codebase
+/rg:plan <nombre del feature>    # Crear plan de implementación
+/rg:execute                      # Ejecutar (loop hasta que pase pytest + ruff)
+/rg:archive                      # Archivar specs completados
+```
+
+---
+
 ## Instalación rápida
+
+Si ya tienes Node.js ≥20.19, Python 3 y Claude Code:
 
 ```bash
 mkdir mi-proyecto && cd mi-proyecto
