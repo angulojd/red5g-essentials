@@ -80,9 +80,18 @@ export async function doctorCommand() {
     return getVersion("claude") || "instalado";
   }));
 
-  inc(check("OpenSpec", () => {
+  inc(check("OpenSpec ≥1.2.0", () => {
     if (!commandExists("openspec")) throw new Error("No instalado → npm i -g @fission-ai/openspec");
-    return getVersion("openspec") || "instalado";
+    const raw = getVersion("openspec") || "";
+    const match = raw.match(/(\d+\.\d+\.\d+)/);
+    if (match) {
+      const [major, minor] = match[1].split(".").map(Number);
+      if (major < 1 || (major === 1 && minor < 2)) {
+        throw new Error(`Requiere ≥1.2.0, tienes ${match[1]} → npm i -g @fission-ai/openspec@latest`);
+      }
+      return match[1];
+    }
+    return raw || "instalado";
   }));
 
   inc(check("ruff", () => {
@@ -92,12 +101,7 @@ export async function doctorCommand() {
 
   inc(check("Beads (opcional)", () => {
     if (!commandExists("bd")) throw new Error("No instalado — solo para memoria persistente entre sesiones");
-    return "instalado";
-  }));
-
-  inc(check("tmux (opcional)", () => {
-    if (!commandExists("tmux")) throw new Error("No instalado — solo para /plan-team");
-    return "instalado";
+    return getVersion("bd") || "instalado";
   }));
 
   // ─── Proyecto ───
@@ -176,10 +180,6 @@ export async function doctorCommand() {
     log.warn(chalk.bold(`${passed}/${total} checks pasaron, ${failed} requieren atención`));
   }
 
-  log.blank();
-  console.log(chalk.dim("  Nota: El plugin Essentials se instala dentro de Claude Code:"));
-  console.log(chalk.dim("  /plugin marketplace add GantisStorm/essentials-claude-code"));
-  console.log(chalk.dim("  /plugin install essentials@essentials-claude-code"));
   log.blank();
 
   process.exit(failed > 0 ? 1 : 0);

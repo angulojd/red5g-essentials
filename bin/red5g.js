@@ -17,8 +17,8 @@ const program = new Command();
 program
   .name("red5g")
   .description(
-    "Instala y configura el flujo de trabajo red5g-essentials para Claude Code.\n" +
-    "Integra OpenSpec (planificación) + Essentials (ejecución) + auditor de calidad + ruff."
+    "Instala y configura el flujo de trabajo red5g para Claude Code.\n" +
+    "Integra OpenSpec (planificación) + auditor de calidad + ruff + quality gates."
   )
   .version(pkg.version);
 

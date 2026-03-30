@@ -1,4 +1,4 @@
-"""PostToolUse hook: valida PEP 8 con ruff.
+"""PostToolUse hook: valida PEP 8 con ruff + longitud de linea.
 
 Se ejecuta despues de Write/Edit/MultiEdit en archivos .py.
 Exit code 2 = BLOQUEA la accion de Claude.
@@ -10,6 +10,38 @@ import os
 import shutil
 import subprocess
 import sys
+
+
+def get_max_line_length() -> int:
+    """Lee line-length de pyproject.toml. Default: 100."""
+    try:
+        with open("pyproject.toml", encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if stripped.startswith("line-length"):
+                    parts = stripped.split("=", 1)
+                    if len(parts) == 2:
+                        return int(parts[1].strip())
+    except (OSError, ValueError):
+        pass
+    return 100
+
+
+def check_line_length(file_path: str, max_length: int) -> list[str]:
+    """Verifica que ninguna linea exceda el limite."""
+    violations: list[str] = []
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            for i, line in enumerate(f, 1):
+                length = len(line.rstrip("\n"))
+                if length > max_length:
+                    violations.append(
+                        f"  {file_path}:{i} "
+                        f"({length}/{max_length} chars)"
+                    )
+    except OSError:
+        pass
+    return violations
 
 
 def main() -> None:
@@ -64,6 +96,15 @@ def main() -> None:
     )
     if fmt.returncode != 0:
         errors.append(f"FORMAT:\n{fmt.stdout.strip()}")
+
+    # Capa 3: longitud de linea (izquierda → derecha)
+    max_length = get_max_line_length()
+    line_violations = check_line_length(file_path, max_length)
+    if line_violations:
+        detail = "\n".join(line_violations)
+        errors.append(
+            f"LINE LENGTH (max {max_length}):\n{detail}"
+        )
 
     if errors:
         detail = "\n\n".join(errors)

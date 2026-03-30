@@ -1,13 +1,13 @@
 ---
-name: execute
+name: "OPSX: Apply"
 description: "Implement tasks from an OpenSpec change. Delegates to orchestrator agent which manages code-writers, quality gates, and progress tracking."
 category: Workflow
-tags: [workflow, execution]
+tags: [workflow, artifacts]
 ---
 
 Implement tasks from an OpenSpec change by delegating to the orchestrator agent.
 
-**Input**: Optionally specify a change name (e.g., `/rg:execute add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name (e.g., `/opsx:apply add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
@@ -27,11 +27,11 @@ Implement tasks from an OpenSpec change by delegating to the orchestrator agent.
    ```
 
    **Handle states:**
-   - If `state: "blocked"` (missing artifacts): show message, suggest `/rg:plan`
-   - If `state: "all_done"`: congratulate, suggest `/rg:archive`
+   - If `state: "blocked"` (missing artifacts): show message, suggest `/opsx:propose`
+   - If `state: "all_done"`: congratulate, suggest `/opsx:archive`
    - Otherwise: proceed
 
-   Check `tests/` for test files. If none → "Run `/rg:plan` first (which generates tests)."
+   Check `tests/` for test files. If none → "Run `/opsx:propose` first (which generates tests)."
 
 3. **Delegate to orchestrator agent**
 
@@ -55,7 +55,7 @@ Implement tasks from an OpenSpec change by delegating to the orchestrator agent.
    **Change:** <name>
    [orchestrator summary]
 
-   Next step: /rg:archive to close this change.
+   Next step: /opsx:archive or /rg:archive to close this change.
    ```
 
    **On failure (orchestrator got stuck):**
@@ -70,5 +70,5 @@ Implement tasks from an OpenSpec change by delegating to the orchestrator agent.
    [orchestrator progress]
 
    ### Next Session
-   Resume with: /rg:execute <name>
+   Resume with: /opsx:apply <name> or /rg:execute <name>
    ```

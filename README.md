@@ -1,12 +1,8 @@
 # @red5g/cli
 
-CLI para instalar y configurar el flujo de trabajo **red5g-essentials** para Claude Code.
+CLI para instalar y configurar el flujo de trabajo **red5g** para Claude Code.
 
-Integra **OpenSpec** (planificación) + **Essentials** (ejecución) + **auditor de calidad** + **ruff** + **ClickUp MCP** en 7 comandos simples.
-
-<p align="center">
-  <img src="docs/images/red5g_workflow_diagram_v2.svg" alt="red5g workflow diagram" width="800">
-</p>
+Integra **OpenSpec** (planificación spec-driven) + **auditor de calidad** + **ruff** + **quality gates** + **ClickUp MCP** en 7 comandos simples.
 
 ## Guía de instalación paso a paso
 
@@ -40,14 +36,14 @@ Ejecuta `claude` y sigue las instrucciones de autenticación.
 El CLI las instala automáticamente durante `init`, pero si prefieres hacerlo manualmente:
 
 ```bash
-# OpenSpec — motor de planificación (requerido)
+# OpenSpec — planificación spec-driven (requerido)
 npm install -g @fission-ai/openspec@latest
 
 # ruff — linter y formatter de Python (requerido)
 curl -LsSf https://astral.sh/ruff/install.sh | sh
 
-# Beads — memoria persistente entre sesiones (opcional)
-brew install beads
+# Beads — memoria persistente entre sesiones (opcional, incluye Dolt embedded)
+npm install -g @beads/bd
 ```
 
 ### 4. Crear el proyecto
@@ -58,7 +54,7 @@ git init
 npx @red5g/cli init
 ```
 
-El asistente te preguntará qué template usar y si quieres scaffold. Si alguna herramienta falta, intentará instalarla automáticamente.
+El asistente te preguntará qué template usar y si quieres scaffold.
 
 ### 5. Verificar el entorno
 
@@ -66,26 +62,7 @@ El asistente te preguntará qué template usar y si quieres scaffold. Si alguna 
 npx @red5g/cli doctor
 ```
 
-Revisa que todas las herramientas y archivos estén en su lugar.
-
-### 6. Instalar Essentials (dentro de Claude Code)
-
-Abre Claude Code en tu proyecto:
-
-```bash
-claude
-```
-
-Dentro de Claude Code, ejecuta estos dos comandos (una sola vez):
-
-```
-/plugin marketplace add GantisStorm/essentials-claude-code
-/plugin install essentials@essentials-claude-code
-```
-
-Essentials provee los motores de ejecución (`/implement-loop`, `/plan-loop`, `/plan-swarm`, `/plan-team`) que los comandos `/rg:*` usan internamente.
-
-### 7. Listo — usa el workflow
+### 6. Listo — usa el workflow
 
 Dentro de Claude Code:
 
@@ -93,7 +70,7 @@ Dentro de Claude Code:
 /rg:explore <qué investigar>     # Investigar el codebase
 /rg:plan <nombre del feature>    # Crear plan de implementación
 /rg:execute                      # Ejecutar (loop hasta que pase pytest + ruff)
-/rg:archive                      # Archivar specs completados
+/rg:archive                      # Archivar cambio completado
 ```
 
 ---
@@ -111,32 +88,23 @@ npx @red5g/cli init --template backend-mysql --scaffold
 
 | Componente | Qué hace |
 |------------|----------|
-| **OpenSpec** | Planificación con specs (`/opsx:explore`, `/opsx:propose`, `/opsx:archive`) |
+| **OpenSpec** | Planificación spec-driven (`openspec/specs/`, `openspec/changes/`) |
 | **ruff** | Linter + formatter de Python (hook bloqueante) |
 | **Beads** | Memoria persistente entre sesiones (opcional) |
-| **Plugin red5g** | 7 commands + 2 agents + 2 skills + 1 hook en `.claude/` |
+| **Plugin red5g** | 11 commands + 5 agents + 2 skills + 1 hook en `.claude/` |
 | **ClickUp MCP** | Conexión directa a ClickUp para leer/escribir tareas (`.mcp.json`) |
 | **CLAUDE.md** | Guía del proyecto para Claude Code |
 | **Scaffold** | Estructura de carpetas con archivos base (opcional) |
-
-> **Nota:** El plugin [Essentials](https://github.com/GantisStorm/essentials-claude-code) se instala desde dentro de Claude Code (no se puede automatizar desde fuera).
 
 ## Comandos del CLI
 
 ### `red5g init`
 
 ```bash
-# Interactivo
-npx @red5g/cli init
-
-# Directo
-npx @red5g/cli init --template backend-mysql --scaffold
-
-# Sin preguntas
-npx @red5g/cli init -t backend-mysql -s -y
-
-# Sin instalar herramientas globales
-npx @red5g/cli init -t backend-mysql -s --skip-tools
+npx @red5g/cli init                              # Interactivo
+npx @red5g/cli init --template backend-mysql -s   # Directo con scaffold
+npx @red5g/cli init -t backend-mysql -s -y        # Sin preguntas
+npx @red5g/cli init --skip-tools                  # Sin instalar herramientas
 ```
 
 ### `red5g doctor`
@@ -144,8 +112,6 @@ npx @red5g/cli init -t backend-mysql -s --skip-tools
 ```bash
 npx @red5g/cli doctor
 ```
-
-Verifica: Node ≥20.19, git, Claude Code, OpenSpec, ruff, Beads, tmux, repo git, CLAUDE.md, pyproject.toml, ClickUp MCP, plugin instalado.
 
 ### `red5g update`
 
@@ -156,50 +122,77 @@ npx @red5g/cli update --force # Sin preguntar
 
 ## Flujo de trabajo
 
-Después de `init`, dentro de Claude Code:
+**Siempre empezar con explore.** Explore investiga y recomienda el siguiente paso.
 
 ```
-# Feature desde cero
-/rg:explore <qué investigar>
-/rg:plan <nombre del feature>
-/rg:execute
-/rg:archive
+/rg:explore <descripción>        # Investiga → recomienda fix o plan
+```
 
-# Feature desde HU del PM
-/rg:feasibility <hu.md o URL de ClickUp>
-/rg:plan <nombre del feature>
-/rg:execute
-/rg:archive
+### Si explore recomienda fix (cambio pequeño)
 
-# Bugs rápidos
-/rg:fix <descripción del bug>
+```
+/rg:fix <nombre>                 # OpenSpec ligero + orchestrator + archive
+                                 # Todo en un comando, spec persiste
+```
 
-# Auditoría manual
-/rg:audit src/services/
+### Si explore recomienda plan (feature grande)
+
+```
+/rg:plan <nombre del feature>    # Crea artefactos OpenSpec + genera tests
+                                 # PAUSA — revisar y aprobar
+/rg:execute                      # Orchestrator implementa con quality gates
+/rg:archive                      # Sincroniza specs, archiva cambio
+```
+
+### Con HU del PM
+
+```
+/rg:feasibility <hu.md o URL>    # Valida HU contra codebase real
+/rg:explore <descripción>        # Investiga → recomienda fix o plan
+... luego fix o plan según tamaño
+```
+
+### Auditoría manual
+
+```
+/rg:audit src/services/          # Delega al agente code-auditor
 ```
 
 ### Qué orquesta cada comando
 
 | Comando | Por debajo |
 |---------|-----------|
-| `/rg:feasibility` | Lee HU + codebase → genera `feasibility.md` → postea feedback en ClickUp |
-| `/rg:explore` | → `/opsx:explore` — investiga el codebase |
-| `/rg:plan` | Lee `exploration.md` o `feasibility.md` → `/opsx:propose` → plan Essentials → genera tests → pausa para aprobación |
-| `/rg:execute` | → `/plan-loop` con exit criteria = pytest + ruff, auditor por tarea |
-| `/rg:archive` | → `/opsx:archive` — archiva specs |
-| `/rg:fix` | → investigación rápida → `/implement-loop` con ruff como exit criteria + auditor |
-| `/rg:audit` | → delega al agente `code-auditor` para revisión de calidad |
+| `/rg:explore` | Modo pensamiento — investiga codebase, visualiza, recomienda fix o plan |
+| `/rg:fix` | OpenSpec ligero (proposal + spec + tasks) → `orchestrator` → `code-writer` + quality gates → archive con spec persistente |
+| `/rg:plan` | OpenSpec crea change → sesión principal genera artefactos → `test-generator` → crea beads (opcional) → pausa para aprobación |
+| `/rg:execute` | Delega a `orchestrator` → `code-writer` por tarea → pytest + ruff + `code-auditor` por tarea |
+| `/rg:archive` | Verifica quality gates → sincroniza specs a `openspec/specs/` → cierra beads → archiva |
+| `/rg:feasibility` | Lee HU + analiza codebase → genera reporte → postea en ClickUp |
+| `/rg:audit` | Delega al agente `code-auditor` |
 
-## Después de init
+### Agentes
 
-Dentro de Claude Code, instala Essentials (una sola vez):
+| Agente | Rol |
+|--------|-----|
+| `orchestrator` | Orquesta ejecución: lee tasks, delega a code-writers, corre quality gates |
+| `code-writer` | Implementa una tarea específica (recibe contexto, escribe código) |
+| `test-generator` | Genera pytest tests desde specs WHEN/THEN |
+| `code-auditor` | Audita calidad Python (7 pilares) |
+| `git-flow` | Automatiza Git Flow (branching, merging, releases) |
 
-```
-/plugin marketplace add GantisStorm/essentials-claude-code
-/plugin install essentials@essentials-claude-code
-```
+### Equivalencias con OpenSpec
 
-Essentials provee los motores de ejecución: `/implement-loop`, `/plan-loop`, `/plan-swarm`, `/plan-team`.
+Los comandos `/rg:*` tienen equivalentes `/opsx:*` que hacen exactamente lo mismo:
+
+| red5g | OpenSpec | Nota |
+|-------|---------|------|
+| `/rg:explore` | `/opsx:explore` | Idénticos |
+| `/rg:plan` | `/opsx:propose` | Idénticos |
+| `/rg:execute` | `/opsx:apply` | Idénticos |
+| `/rg:archive` | `/opsx:archive` | Idénticos |
+| `/rg:fix` | — | Solo en red5g |
+| `/rg:feasibility` | — | Solo en red5g |
+| `/rg:audit` | — | Solo en red5g |
 
 ## Templates
 
@@ -218,8 +211,6 @@ Essentials provee los motores de ejecución: `/implement-loop`, `/plan-loop`, `/
 | OpenSpec | Sí | Sí |
 | ruff | Sí | Sí |
 | Beads | Opcional | Sí |
-| Essentials plugin | Sí | No (se instala dentro de Claude Code) |
-| tmux | Opcional | No (solo para `/plan-team`) |
 
 ## Licencia
 

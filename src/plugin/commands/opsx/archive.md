@@ -1,5 +1,5 @@
 ---
-name: archive
+name: "OPSX: Archive"
 description: "Archive a completed change — verifies quality gates, syncs specs, and archives."
 category: Workflow
 tags: [workflow, archive]
@@ -7,7 +7,7 @@ tags: [workflow, archive]
 
 Archive a completed change. Verifies quality gates before archiving.
 
-**Input**: Optionally specify a change name (e.g., `/rg:archive add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name after `/opsx:archive` (e.g., `/opsx:archive add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
@@ -27,7 +27,7 @@ Archive a completed change. Verifies quality gates before archiving.
    pytest tests/test_controllers/ -v && ruff check src/
    ```
 
-   If either fails → "Tests or ruff failing. Run `/rg:execute` first."
+   If either fails → "Tests or ruff failing. Run `/opsx:apply` or `/rg:execute` first."
 
 3. **Check artifact completion status**
 
@@ -98,7 +98,7 @@ Archive a completed change. Verifies quality gates before archiving.
 
 **Guardrails**
 - Always prompt for change selection if not provided
-- **Always verify pytest + ruff before archiving**
+- **Always verify pytest + ruff before archiving** (this is the red5g quality gate — OpenSpec original does not enforce this)
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm
 - Show clear summary of what happened

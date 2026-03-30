@@ -2,8 +2,8 @@
 # 🤖 Development Guide — [PROJECT NAME]
 
 > **EDIT THIS FILE** with your project-specific information.
-> Code rules (PEP 8, typing, security, SOLID) are in `.claude/skills/python-standards.md`.
-> Workflow guide is in `.claude/skills/workflow-guide.md`.
+> Code rules (PEP 8, typing, security, SOLID) are in `.claude/skills/python-standards/SKILL.md`.
+> Workflow guide is in `.claude/skills/workflow-guide/SKILL.md`.
 
 ## Architecture
 

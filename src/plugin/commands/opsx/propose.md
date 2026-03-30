@@ -1,8 +1,8 @@
 ---
-name: plan
+name: "OPSX: Propose"
 description: "Propose a new change - create it and generate all artifacts in one step, then generate an executable plan and tests."
 category: Workflow
-tags: [workflow, planning, artifacts, experimental]
+tags: [workflow, artifacts]
 ---
 
 Propose a new change - create the change and generate all artifacts in one step.
@@ -16,7 +16,7 @@ I'll create a change with artifacts:
 
 ---
 
-**Input**: The argument is the change name (kebab-case), OR a description of what the user wants to build.
+**Input**: The argument after `/opsx:propose` is the change name (kebab-case), OR a description of what the user wants to build.
 
 **Steps**
 
@@ -34,7 +34,6 @@ I'll create a change with artifacts:
    - Read `CLAUDE.md` for architecture and rules
    - Read `openspec/specs/` for existing canonical specifications
    - Read `pyproject.toml` for project configuration
-   - Check `openspec/changes/` for existing changes with `feasibility.md` — if found, read it for prior context
 
 3. **Create the change directory**
    ```bash
@@ -146,9 +145,7 @@ After completing everything, summarize:
 - List of artifacts created (proposal, specs, design, tasks)
 - Tests generated with count
 - Beads created: N tasks under epic (or "Beads not active")
-- Prompt: "Review the artifacts and tests. When approved, run `/rg:execute` to start implementing."
-
-**STOP HERE.** Do NOT proceed to implementation. Wait for the user to review and approve.
+- Prompt: "Review the artifacts and tests. When approved, run `/opsx:apply` or `/rg:execute` to start implementing."
 
 **Guardrails**
 - Create ALL artifacts needed for implementation (as defined by schema's `apply.requires`)

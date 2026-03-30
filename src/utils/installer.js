@@ -17,7 +17,6 @@ function run(cmd, opts = {}) {
 
 /**
  * Instala OpenSpec globalmente si no está presente.
- * Requiere Node >= 20.19.0
  */
 export async function installOpenSpec() {
   if (commandExists("openspec")) {
@@ -97,7 +96,8 @@ export async function installRuff() {
 
 /**
  * Instala Beads si no está presente.
- * Intenta: brew → curl installer
+ * Intenta: npm → brew → curl installer
+ * El binario incluye Dolt embedded (no necesita servidor externo).
  */
 export async function installBeads() {
   if (commandExists("bd")) {
@@ -107,7 +107,14 @@ export async function installBeads() {
 
   const spinner = ora("Instalando Beads...").start();
 
-  // Intento 1: brew
+  // Intento 1: npm (más confiable cross-platform)
+  try {
+    run("npm install -g @beads/bd");
+    spinner.succeed("Beads instalado (via npm)");
+    return true;
+  } catch { /* continuar */ }
+
+  // Intento 2: brew
   if (commandExists("brew")) {
     try {
       run("brew install beads");
@@ -116,7 +123,7 @@ export async function installBeads() {
     } catch { /* continuar */ }
   }
 
-  // Intento 2: curl
+  // Intento 3: curl
   try {
     run("curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash");
     spinner.succeed("Beads instalado");
@@ -124,7 +131,7 @@ export async function installBeads() {
   } catch { /* continuar */ }
 
   spinner.fail("No se pudo instalar Beads");
-  log.warn("Beads es opcional. Instala manualmente si necesitas memoria persistente entre sesiones.");
+  log.warn("Beads es opcional. Instala manualmente: npm install -g @beads/bd");
   return false;
 }
 
