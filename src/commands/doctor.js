@@ -115,12 +115,12 @@ export async function doctorCommand() {
   }));
 
   inc(check("CLAUDE.md", () => {
-    if (!existsSync(join(cwd, "CLAUDE.md"))) throw new Error("Ejecuta: npx @red5g/cli init");
+    if (!existsSync(join(cwd, "CLAUDE.md"))) throw new Error("Ejecuta: npx @red5g/cli@latest init");
     return "";
   }));
 
   inc(check("pyproject.toml", () => {
-    if (!existsSync(join(cwd, "pyproject.toml"))) throw new Error("Ejecuta: npx @red5g/cli init");
+    if (!existsSync(join(cwd, "pyproject.toml"))) throw new Error("Ejecuta: npx @red5g/cli@latest init");
     return "";
   }));
 
@@ -131,7 +131,7 @@ export async function doctorCommand() {
 
   inc(check("ClickUp MCP (.mcp.json)", () => {
     const mcpPath = join(cwd, ".mcp.json");
-    if (!existsSync(mcpPath)) throw new Error("No encontrado — ejecuta: npx @red5g/cli init");
+    if (!existsSync(mcpPath)) throw new Error("No encontrado — ejecuta: npx @red5g/cli@latest init");
     return "";
   }));
 
@@ -144,25 +144,25 @@ export async function doctorCommand() {
 
   inc(check("Commands", () => {
     const n = countFiles(join(claudeDir, "commands"));
-    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli init");
+    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli@latest init");
     return `${n} archivos`;
   }));
 
   inc(check("Agents", () => {
     const n = countFiles(join(claudeDir, "agents"));
-    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli init");
+    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli@latest init");
     return `${n} archivos`;
   }));
 
   inc(check("Skills", () => {
     const n = countFiles(join(claudeDir, "skills"));
-    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli init");
+    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli@latest init");
     return `${n} archivos`;
   }));
 
   inc(check("Hooks", () => {
     const n = countFiles(join(claudeDir, "hooks"));
-    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli init");
+    if (n === 0) throw new Error("No encontrados — ejecuta: npx @red5g/cli@latest init");
     return `${n} archivos`;
   }));
 
