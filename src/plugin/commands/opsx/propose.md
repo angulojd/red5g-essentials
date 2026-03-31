@@ -68,6 +68,23 @@ I'll create a change with artifacts:
       - Read any completed dependency files for context
       - Create the artifact file using `template` as the structure
       - Apply `context` and `rules` as constraints - but do NOT copy them into the file
+      - **For design.md specifically:** If the feature involves multiple modules or components that interact (e.g., controllers + services, front + back, multiple endpoints), add a `## Contracts` section at the end of design.md. Contracts define shared interfaces that all modules must respect:
+        ```markdown
+        ## Contracts
+
+        ### API Response Format
+        - Success: { data: T, message: string }
+        - Error: { error: string, message: string, status: int }
+
+        ### Auth Token
+        - Format: JWT { user_id, role, exp }
+        - Header: Authorization: Bearer <token>
+
+        ### Database
+        - Models extend Base from src/database.py
+        - Tables: snake_case, Models: PascalCase
+        ```
+        Adapt contracts to the specific project and feature. Include only contracts relevant to this change. If the feature is a single isolated module with no cross-module interactions, skip this section.
       - Show brief progress: "Created <artifact-id>"
 
    b. **Continue until all `applyRequires` artifacts are complete**

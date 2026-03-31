@@ -1,115 +1,94 @@
 ---
 name: fix
-description: "Quick fix workflow for bugs and small tasks. Investigates, creates a lightweight OpenSpec change using the CLI, implements via orchestrator, and archives. The fix spec lives permanently in openspec/specs/ for future reference."
+description: "Quick fix for bugs and small tasks. Evaluates complexity, implements via code-writer, audits, and validates with pytest + ruff. No OpenSpec artifacts — investigation should already be done via /rg:explore."
 argument-hint: <description of the bug or small task>
 category: Workflow
 tags: [workflow, fix, bugfix]
 ---
 
-Quick fix workflow — investigate, document, implement, archive. All in one command, but with specs that persist for future reference.
+Quick fix — evaluate, implement, validate. Investigation should already be done via `/rg:explore`.
 
-**Input**: Description of the bug or small task.
+**Input**: Description of the bug or what to fix. Uses conversation context from prior `/rg:explore` if available.
 
 ---
 
 ## Steps
 
-### 1. Quick Investigation
+### 1. Evaluate Complexity
 
-1. **Read project context:** Read `CLAUDE.md` for architecture and rules.
-2. **Check existing specs:** Run `openspec list --json` and scan `openspec/specs/` — the bug might relate to an existing capability.
-3. **Understand the problem:** Read the files related to the user's description. Use `Grep` and `Glob` to find relevant code.
-4. **Brief summary:** In 2-3 sentences, explain what you found and what you'll fix.
+Before touching any code, evaluate if this is really a fix:
 
-### Escape Hatch
+- **More than 3 files** need modification?
+- **Architecture changes** — new modules, changed interfaces, new dependencies?
+- **New tests required** — not just existing tests passing, but new test scenarios?
 
-If during investigation you realize this is NOT a small fix:
-- STOP.
-- Tell the user: "This is bigger than a quick fix. I recommend: /rg:explore → /rg:plan → /rg:execute → /rg:archive"
+**If ANY of these apply → STOP.** Tell the user:
+> "This is bigger than a quick fix. I recommend: `/rg:explore` → `/rg:plan` → `/rg:execute` → `/rg:archive`"
 
-### 2. Create lightweight OpenSpec change
+If none apply → proceed.
 
-Derive a kebab-case name from the description (e.g., "fix-login-timeout", "fix-null-pointer-export").
+### 2. Snapshot Test Baseline
 
 ```bash
-openspec new change "fix-<name>"
+pytest tests/ -v --tb=no -q 2>&1
 ```
 
-Get the artifact build order:
-```bash
-openspec status --change "fix-<name>" --json
-```
+Record which tests pass and which already fail. This is the **baseline** — only NEW failures after the fix are regressions.
 
-Create artifacts in dependency order — for each artifact that is `ready`:
-```bash
-openspec instructions <artifact-id> --change "fix-<name>" --json
-```
+### 3. Implement — delegate to `code-writer`
 
-Use the instructions `template` as structure. Keep artifacts **lightweight** — this is a fix, not a full feature:
+Pass the code-writer:
+- What to fix (from user description + conversation context)
+- Files to modify
+- Existing code patterns (read the files first)
 
-- **`proposal.md`** — Brief: what's broken (2-3 sentences), what will be fixed, files involved
-- **`specs/<area>/spec.md`** — Document the CORRECT behavior with WHEN/THEN scenarios. Always include a regression guard scenario.
-- **`tasks.md`** — Usually 1-2 tasks: the fix itself + update/add tests
+Wait for the code-writer to return.
 
-After creating each artifact, verify status:
-```bash
-openspec status --change "fix-<name>" --json
-```
+### 4. Audit — delegate to `code-auditor`
 
-Continue until all `applyRequires` artifacts have `status: "done"`.
+Pass the code-auditor the files the code-writer modified.
 
-**IMPORTANT**: `context` and `rules` from OpenSpec instructions are constraints for YOU, not content for the artifact files.
+**Handle audit result:**
+- **Approved** → continue to step 5
+- **Critical issues:**
+  1. Delegate to `code-writer` with the audit report
+  2. Delegate to `code-auditor` again
+  3. Max 3 retries — if still failing, stop and show the user
 
-### 3. Implement
-
-**Delegate to the `orchestrator` agent.** Pass it the change name `fix-<name>`.
-
-The orchestrator will:
-- Read the artifacts via `openspec instructions apply`
-- Delegate to `code-writer` for each task
-- Run quality gates (pytest + ruff + code-auditor)
-- Mark tasks `[x]`
-
-Wait for the orchestrator to complete.
-
-### 4. Archive
-
-On success, archive the fix so the spec persists:
+### 5. Validate
 
 ```bash
-openspec status --change "fix-<name>" --json
+pytest tests/ -v && ruff check src/ && ruff format --check src/
 ```
 
-If all tasks complete:
-- Sync delta specs to `openspec/specs/` (the fix spec lives permanently for future reference)
-- If Beads active: close any beads + `bd sync`
-- Archive:
-  ```bash
-  mkdir -p openspec/changes/archive
-  mv openspec/changes/fix-<name> openspec/changes/archive/$(date +%Y-%m-%d)-fix-<name>
-  ```
+**Compare against baseline:**
+- Test was **already failing** before → ignore (not our problem)
+- Test was **passing before** and now fails → **regression**, must fix:
+  1. Delegate to `code-writer` — "Test X was passing before your fix and now fails. Fix your code, do NOT modify the test."
+  2. Delegate to `code-auditor` on the modified files
+  3. Run pytest + ruff again
+  4. Max 3 retries — if still failing, stop and show the user
 
-### 5. Summary
+### 6. Done
 
 ```
 ## Fix Applied
 
-**Change:** fix-<name>
-**Archived to:** openspec/changes/archive/YYYY-MM-DD-fix-<name>/
-**Spec persisted:** openspec/specs/<area>/spec.md
-**Files modified:** [list]
-**Tests:** passing
-**ruff:** passing
-**Auditor:** approved
+**Files modified:**
+- <list>
+
+**Tests:** passing (no regressions)
+**Ruff:** clean
+**Audit:** approved
 ```
 
 ---
 
-## Guardrails
+## Key Rules
 
-- Keep artifacts lightweight — this is a fix, not a full feature
-- Use the OpenSpec CLI for artifact creation (same flow as `/rg:plan`)
-- The spec should document the CORRECT behavior, not the bug
-- Always include a regression guard scenario in the spec
-- Escape to the full flow if the fix is bigger than expected
-- Specs persist after archive → future sessions know the intended behavior
+- **No OpenSpec, no artifacts, no tasks** — this is a quick fix, not a feature
+- **Investigation happens in `/rg:explore`** — fix just applies the correction
+- **Complexity gate is mandatory** — if it's too big, redirect to the full flow
+- **Baseline protection** — never blame a test that was already failing
+- **Every code-writer change gets audited** — no exceptions
+- **NEVER loop indefinitely** — max 3 retries, then report to user
