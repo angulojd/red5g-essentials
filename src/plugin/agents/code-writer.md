@@ -2,6 +2,7 @@
 name: code-writer
 description: "Implements a single task from an OpenSpec change. Receives task context, writes or edits code files, and returns what was changed. Focused and atomic — one task at a time."
 model: sonnet
+color: cyan
 tools: Read, Glob, Grep, Write, Edit, Bash
 ---
 
@@ -33,20 +34,27 @@ You will receive:
    ```
    For each .py file you created or modified.
 
-4. **Return summary** of what you changed.
+4. **Mark task complete** in the tasks file: change `- [ ]` to `- [x]` for the task you implemented.
+
+5. **Return summary** of what you changed.
 
 ## Code Rules
 
-- **Complete code only** — no `...`, no `# TODO`, no `pass` as placeholder
+**Read and follow `.claude/skills/python-standards/SKILL.md`** — these are NON-NEGOTIABLE project standards.
+
+Key rules (from python-standards):
 - **Type hints mandatory** — all parameters + return types
-- **Docstrings in Spanish, code in English**
-- **Follow project patterns** — read existing code and match style exactly:
-  - Same decorators (`@handle_exceptions`)
-  - Same base classes
-  - Same import patterns
-  - Same error handling patterns
+- **Pydantic v2** for API I/O validation, **pydantic-settings** for config
+- **Language**: source code 100% English, docstrings/comments/logs 100% Spanish
+- **Security**: zero hardcoded credentials, no `os.environ` outside `config.py`, no `print()` in prod
+- **Architecture**: Handler → Controller → Service → Repository strict chain
+- **Error handling**: NEVER try/except in handlers/controllers, use `@handle_exceptions` decorator
+- **Functions max 100 lines**, max 3 nesting levels, use guard clauses
+
+Additional rules:
+- **Complete code only** — no `...`, no `# TODO`, no `pass` as placeholder
+- **Follow project patterns** — read existing code and match style exactly (decorators, base classes, imports)
 - **Minimal changes** — only modify what the task requires. Don't refactor adjacent code.
-- **No hardcoded credentials** — use config/settings patterns from the project
 
 ## Output
 
