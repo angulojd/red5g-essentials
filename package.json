@@ -1,6 +1,6 @@
 {
   "name": "@red5g/cli",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "CLI para instalar el flujo de trabajo red5g — planificación y ejecución nativa para backends Python serverless en AWS con Claude Code",
   "type": "module",
   "bin": {
@@ -15,6 +15,8 @@
   },
   "keywords": [
     "claude-code",
+    "openspec",
+    "beads",
     "python",
     "serverless",
     "aws",
