@@ -1,0 +1,114 @@
+service: quuo-nombre-repo
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.12
+  region: us-east-1
+  stage: ${opt:stage, 'sqa'}
+  environment:
+    SECRET_ROOT: ${env:SECRET_ROOT}
+    SECRET_CORE: ${env:SECRET_CORE}
+    # Variables propias del repo:
+    # MAIL_URL: ${env:MAIL_URL}
+
+plugins:
+  - serverless-python-requirements
+  - serverless-prune-plugin
+  - serverless-plugin-scripts
+  - serverless-associate-waf
+
+custom:
+  prune:
+    automatic: true
+    includeLayers: true
+    number: 3
+
+  pythonRequirements:
+    fileName: requirements.txt
+    useDownloadCache: false
+    useStaticCache: false
+    invalidateCaches: true
+    layer: true
+    slim: true
+    strip: false
+    slimPatternsAppendDefaults: false
+    slimPatterns:
+      - numpy/**
+      - numpy.libs/**
+      - boto3/**
+      - botocore/**
+      - s3transfer/**
+      - urllib3/**
+      - mysql/vendor/**
+      - "**/*.py[c|o]"
+      - "**/__pycache__*"
+    pipCmdExtraArgs:
+      - --no-deps
+
+  scriptable:
+    hooks:
+      package:createDeploymentArtifacts:
+        - python3.12 -m compileall -f -q --invalidation-mode=unchecked-hash .serverless/requirements/ || true
+
+  associateWaf:
+    name: ${env:WAF_NAME}
+    version: ${env:WAF_VERSION}
+
+  SECRET_ID_ROOT: ${env:SECRET_ROOT}
+  SECRET_ID_CORE: ${env:SECRET_CORE}
+  SECRET_CORE: ${ssm:/aws/reference/secretsmanager/${self:custom.SECRET_ID_CORE}}
+  COGNITO_USER_POOL_ID: ${self:custom.SECRET_CORE.USER_POOL}
+
+  stage: ${sls:stage}
+  prefix: ${cf(${aws:region}):aws-quuo-common-${self:custom.stage}.FPrefix}
+  common: ${self:custom.prefix}common-${self:custom.stage}
+
+  authorizerConfig:
+    name: CognitoUserPoolAuthorizer
+    type: COGNITO_USER_POOLS
+    arn: "arn:aws:cognito-idp:${aws:region}:${aws:accountId}:userpool/${self:custom.SECRET_CORE.USER_POOL}"
+    identitySource: method.request.header.Authorization
+
+  globalTimeOut: 30
+  SQSglobalTimeOut: 900
+  memorySize: 1024
+
+  CORE_BUCKET: ${self:custom.SECRET_CORE.core_bucket}
+  CORE_BUCKET_LOG: logs_${self:custom.stage}
+
+  cors:
+    origin: "*"
+    headers:
+      - Content-Type
+      - X-Amz-Date
+      - Authorization
+      - X-Api-Key
+      - X-Amz-Security-Token
+      - X-Amz-User-Agent
+      - Access-Control-Allow-Headers
+      - Accept
+      - Accept-Language
+      - Content-Language
+      - Access-Control-Allow-Origin
+      - Access-Control-Allow-Methods
+      - Access-Control-Allow-Credentials
+
+functions:
+  Example:
+    name: ${self:custom.prefix}Example-${self:custom.stage}
+    handler: handlers/ExampleHandler.example_handler
+    timeout: ${self:custom.globalTimeOut}
+    memorySize: ${self:custom.memorySize}
+    events:
+      - http:
+          path: /example
+          method: GET
+          authorizer: ${self:custom.authorizerConfig}
+          cors: ${self:custom.cors}
+      - http:
+          path: /example
+          method: POST
+          authorizer: ${self:custom.authorizerConfig}
+          cors: ${self:custom.cors}

@@ -25,7 +25,7 @@ program
 program
   .command("init")
   .description("Inicializa un proyecto: instala herramientas, copia plugin, crea scaffold")
-  .option("-t, --template <nombre>", "Template a usar (backend-mysql | generic)")
+  .option("-t, --template <nombre>", "Template a usar (backend-mysql | quuo | generic)")
   .option("-s, --scaffold", "Crear estructura de carpetas con archivos base")
   .option("-y, --yes", "Aceptar valores por defecto sin preguntar")
   .option("--skip-tools", "No instalar herramientas globales (OpenSpec, ruff, Beads)")

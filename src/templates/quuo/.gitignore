@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment — Quuo usa stages
+.env
+.env.sqa
+.env.pdn
+.env.local
+
+# requirements.txt es generado por setup.py para deploy
+requirements.txt
+
+# AWS / Serverless
+.serverless/
+node_modules/
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Beads
+.beads/
+
+# OS
+.DS_Store
+Thumbs.db

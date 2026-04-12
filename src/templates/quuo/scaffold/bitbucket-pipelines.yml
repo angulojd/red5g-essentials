@@ -1,0 +1,51 @@
+definitions:
+  steps:
+    - step: &build-lambda
+        name: Build Lambda
+        image: python:3.12-slim
+        oidc: true
+        script:
+          - export AWS_DEFAULT_REGION=us-east-1
+          - export AWS_ROLE_ARN=arn:aws:iam::207567794958:role/bitbucket
+          - export AWS_WEB_IDENTITY_TOKEN_FILE=$(pwd)/web-identity-token
+          - echo $BITBUCKET_STEP_OIDC_TOKEN > $(pwd)/web-identity-token
+          - apt-get update && apt-get install -y nodejs npm python3-pip
+          - python3 -m pip install --upgrade pip setuptools
+          - npm install -g serverless@3.36.0
+          - export INSTALL_ON_LINUX=1
+          - python3 script.py
+          - serverless plugin install -n serverless-plugin-custom-roles
+          - serverless plugin install -n serverless-python-requirements
+          - serverless plugin install -n serverless-deployment-bucket
+          - serverless plugin install -n "@agiledigital/serverless-sns-sqs-lambda"
+          - serverless plugin install -n serverless-scriptable-plugin
+          - serverless print --stage pdn --verbose
+
+    - step: &deploy-lambda
+        name: Deploy Lambda
+        image: python:3.12-slim
+        oidc: true
+        script:
+          - export AWS_DEFAULT_REGION=us-east-1
+          - export AWS_ROLE_ARN=arn:aws:iam::207567794958:role/bitbucket
+          - export AWS_WEB_IDENTITY_TOKEN_FILE=$(pwd)/web-identity-token
+          - echo $BITBUCKET_STEP_OIDC_TOKEN > $(pwd)/web-identity-token
+          - apt-get update && apt-get install -y nodejs npm python3-pip
+          - python3 -m pip install --upgrade pip setuptools
+          - npm install -g serverless@3.36.0
+          - export INSTALL_ON_LINUX=1
+          - python3 script.py
+          - serverless plugin install -n serverless-plugin-custom-roles
+          - serverless plugin install -n serverless-python-requirements
+          - serverless plugin install -n serverless-deployment-bucket
+          - serverless plugin install -n "@agiledigital/serverless-sns-sqs-lambda"
+          - serverless plugin install -n serverless-scriptable-plugin
+          - serverless deploy --stage pdn --verbose
+
+pipelines:
+  pull-requests:
+    '**':
+      - step: *build-lambda
+  branches:
+    main:
+      - step: *deploy-lambda

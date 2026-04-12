@@ -1,0 +1,2 @@
+# Lock de dependencias de producción.
+# Generar con: pip-compile requirements/requirements-dev.txt -o requirements/requirements-lock.txt

@@ -2,7 +2,7 @@ import { select, confirm } from "@inquirer/prompts";
 import ora from "ora";
 import chalk from "chalk";
 import {
-  existsSync, mkdirSync, cpSync, readFileSync, writeFileSync, readdirSync, rmSync,
+  existsSync, mkdirSync, cpSync, readFileSync, writeFileSync, readdirSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,12 +22,92 @@ const TEMPLATES = {
     description: "Python 3.13 + Serverless Framework v3 + AWS Lambda + MySQL + SQLAlchemy ORM",
     hasScaffold: true,
   },
+  quuo: {
+    name: "quuo",
+    description: "Quuo 3 — repo de lógica (Python 3.12 + Serverless v3 + Lambda + Cognito + repos base)",
+    hasScaffold: true,
+    extraSkills: ["quuo3-dev"],
+  },
   generic: {
     name: "generic",
     description: "Template vacío para configurar manualmente",
     hasScaffold: false,
   },
 };
+
+// Archivos del scaffold quuo que son SOLO para repos nuevos.
+// En repos Quuo existentes (con código real) se omiten para no contaminar.
+const QUUO_EXAMPLE_FILES = new Set([
+  "Classes/ExampleClass.py",
+  "handlers/ExampleHandler.py",
+  "tests/test_example_class.py",
+  "setup.py",
+  "script.py",
+  "serverless.yml",
+  "bitbucket-pipelines.yml",
+  "dependences.json",
+  "requirements/requirements-dev.txt",
+  "requirements/requirements-git.txt",
+  "requirements/requirements-lock.txt",
+  "requirements/dev.in",
+  "requirements/lock.in",
+  "requirements/readme.txt",
+]);
+
+/**
+ * Heurística: detecta si el cwd ya es un repo Quuo con código real.
+ * Cumple con ≥2 de 3 señales fuertes (setup.py, Classes/, serverless.yml).
+ */
+function isExistingQuuoRepo(cwd) {
+  let signals = 0;
+  if (existsSync(join(cwd, "setup.py"))) signals++;
+  if (existsSync(join(cwd, "serverless.yml"))) signals++;
+  const classesDir = join(cwd, "Classes");
+  if (existsSync(classesDir)) {
+    const hasRealCode = readdirSync(classesDir).some(
+      (f) => f.endsWith(".py") && f !== "__init__.py",
+    );
+    if (hasRealCode) signals++;
+  }
+  return signals >= 2;
+}
+
+/**
+ * Copia el scaffold de quuo respetando una lista de exclusión.
+ * No sobrescribe archivos existentes. Devuelve {created, skipped}.
+ */
+function copyQuuoScaffold(scaffoldDir, destDir, skipFiles) {
+  const result = { created: 0, skipped: 0 };
+
+  function walk(srcSub, destSub, relPrefix) {
+    if (!existsSync(srcSub)) return;
+    mkdirSync(destSub, { recursive: true });
+
+    for (const entry of readdirSync(srcSub, { withFileTypes: true })) {
+      const src = join(srcSub, entry.name);
+      const dest = join(destSub, entry.name);
+      const rel = relPrefix ? `${relPrefix}/${entry.name}` : entry.name;
+
+      if (entry.isDirectory()) {
+        walk(src, dest, rel);
+      } else {
+        if (skipFiles.has(rel)) {
+          result.skipped++;
+          continue;
+        }
+        if (existsSync(dest)) {
+          result.skipped++;
+          continue;
+        }
+        writeFileSync(dest, readFileSync(src));
+        result.created++;
+      }
+    }
+  }
+
+  walk(scaffoldDir, destDir, "");
+  return result;
+}
 
 /**
  * Copia recursivamente todos los archivos de srcDir a destDir.
@@ -159,17 +239,23 @@ export async function initCommand(options) {
 
   log.success(`Plugin instalado: ${cmdCount} commands, ${agentCount} agents, ${skillCount} skills, ${hookCount} hooks`);
 
-  // ─── Limpiar skills duplicadas de OpenSpec (nuestros comandos /opsx:* ya las reemplazan) ───
-  const skillsDir = join(claudeDir, "skills");
-  if (existsSync(skillsDir)) {
-    for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
-      if (entry.isDirectory() && entry.name.startsWith("openspec-")) {
-        try {
-          rmSync(join(skillsDir, entry.name), { recursive: true, force: true });
-        } catch { /* ignorar si falla */ }
+  // Skills extras del template (ej: quuo3-dev solo cuando template === "quuo")
+  if (tmpl.extraSkills?.length) {
+    const templateSkillsDir = join(TEMPLATES_DIR, template, "skills");
+    let extraCount = 0;
+    for (const skillName of tmpl.extraSkills) {
+      const src = join(templateSkillsDir, skillName);
+      if (existsSync(src)) {
+        extraCount += copyPluginFiles(src, join(claudeDir, "skills", skillName));
       }
     }
+    if (extraCount > 0) {
+      log.success(`Skills del template instaladas: ${tmpl.extraSkills.join(", ")} (${extraCount} archivos)`);
+    }
   }
+
+  // OpenSpec skills (openspec-*) se mantienen — proveen contexto persistente
+  // Los comandos /opsx:* de red5g coexisten con las skills de OpenSpec
 
   // ─── settings.json ───
   const settingsPath = join(claudeDir, "settings.json");
@@ -269,9 +355,18 @@ export async function initCommand(options) {
   if (scaffold && tmpl.hasScaffold) {
     const scaffoldDir = join(templateDir, "scaffold");
     if (existsSync(scaffoldDir)) {
-      const spinner = ora("Creando estructura de carpetas...").start();
-      cpSync(scaffoldDir, cwd, { recursive: true, force: false, errorOnExist: false });
-      spinner.succeed("Scaffold creado");
+      // quuo: si ya es un repo Quuo con código real, instalar solo la estructura
+      // (carpetas + .gitkeep) y omitir archivos de ejemplo para no contaminar.
+      if (template === "quuo" && isExistingQuuoRepo(cwd)) {
+        const spinner = ora("Repo Quuo detectado — instalando solo estructura...").start();
+        const { created, skipped } = copyQuuoScaffold(scaffoldDir, cwd, QUUO_EXAMPLE_FILES);
+        spinner.succeed(`Estructura creada (${created} archivos nuevos, ${skipped} omitidos)`);
+        log.info("Archivos de ejemplo omitidos: ExampleClass, ExampleHandler, tests, setup.py, serverless.yml, requirements/");
+      } else {
+        const spinner = ora("Creando estructura de carpetas...").start();
+        cpSync(scaffoldDir, cwd, { recursive: true, force: false, errorOnExist: false });
+        spinner.succeed("Scaffold creado");
+      }
     }
   }
 

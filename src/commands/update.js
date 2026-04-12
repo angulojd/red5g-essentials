@@ -1,7 +1,7 @@
 import { confirm } from "@inquirer/prompts";
 import chalk from "chalk";
 import {
-  existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync,
+  existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,13 @@ import { log } from "../utils/logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_DIR = join(__dirname, "..", "plugin");
+const TEMPLATES_DIR = join(__dirname, "..", "templates");
+
+// Mapa de skills extras → carpeta de origen en src/templates/
+// Mantener sincronizado con TEMPLATES en init.js
+const TEMPLATE_EXTRA_SKILLS = {
+  "quuo3-dev": join(TEMPLATES_DIR, "quuo", "skills", "quuo3-dev"),
+};
 
 function copyDir(srcDir, destDir) {
   if (!existsSync(srcDir)) return 0;
@@ -57,12 +64,13 @@ export async function updateCommand(options) {
   try {
     execSync("command -v openspec", { stdio: "pipe" });
     if (existsSync(join(cwd, "openspec"))) {
-      log.info("Refrescando comandos de OpenSpec...");
+      log.info("Refrescando OpenSpec (delivery: skills)...");
+      execSync("openspec config set delivery skills", { stdio: "pipe" });
       execSync("openspec init --tools claude", { cwd, stdio: "pipe" });
-      log.success("OpenSpec refrescado");
+      log.success("OpenSpec refrescado (skills + commands)");
     }
   } catch {
-    log.warn("OpenSpec no disponible — se omite refresco de /opsx:*");
+    log.warn("OpenSpec no disponible — se omite refresco");
   }
 
   // ─── Copiar plugin red5g (sobrescribe /opsx:* con nuestras versiones) ───
@@ -73,17 +81,16 @@ export async function updateCommand(options) {
 
   log.success(`Actualizado: ${cmdCount} commands, ${agentCount} agents, ${skillCount} skills, ${hookCount} hooks`);
 
-  // ─── Limpiar skills duplicadas de OpenSpec ───
-  const skillsDir = join(claudeDir, "skills");
-  if (existsSync(skillsDir)) {
-    for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
-      if (entry.isDirectory() && entry.name.startsWith("openspec-")) {
-        try {
-          rmSync(join(skillsDir, entry.name), { recursive: true, force: true });
-        } catch { /* ignorar si falla */ }
-      }
+  // Refrescar skills extras del template (ej: quuo3-dev) si ya están instaladas
+  for (const [skillName, srcDir] of Object.entries(TEMPLATE_EXTRA_SKILLS)) {
+    const destDir = join(claudeDir, "skills", skillName);
+    if (existsSync(destDir) && existsSync(srcDir)) {
+      const count = copyDir(srcDir, destDir);
+      log.success(`Skill ${skillName} refrescada (${count} archivos)`);
     }
   }
+
+  // OpenSpec skills (openspec-*) se mantienen — proveen contexto persistente
 
   // ─── Verificar/reparar settings.json hooks ───
   const settingsPath = join(claudeDir, "settings.json");

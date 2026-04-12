@@ -1,0 +1,8 @@
+[
+    "sqlalchemy",
+    "pymysql",
+    "boto3",
+    "DataBase",
+    "Utils",
+    "Auth"
+]

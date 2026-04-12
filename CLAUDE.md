@@ -42,7 +42,10 @@ These files are **copied into the target project's `.claude/` directory** by `in
 ### Templates (`src/templates/`)
 
 - **`backend-mysql/`** — Python 3.13 + Serverless Framework v3 + AWS Lambda + MySQL + SQLAlchemy. Includes full scaffold with handler→controller→service→repository layered architecture.
+- **`quuo/`** — Quuo 3 fintech stack (Python 3.12 + Serverless v3 + Lambda + Cognito + repos base de Bitbucket). Scaffold con `Classes/`, `handlers/`, `Helpers/` y `schemas/` (estos 2 opcionales vacíos), `tests/`, `requirements/{dev.in, lock.in, requirements-{dev,git,lock}.txt, readme.txt}`, `setup.py`, `script.py`, `serverless.yml`, `bitbucket-pipelines.yml`, `dependences.json`. Incluye `extraSkills: ["quuo3-dev"]` que copia el skill `quuo3-dev` (SKILL.md slim de ~370 líneas + 7 references + tables_structure.csv) a `.claude/skills/` solo cuando se elige este template. `init.js` detecta si el cwd ya es un repo Quuo existente y omite los archivos de ejemplo (`QUUO_EXAMPLE_FILES`) para no contaminar.
 - **`generic/`** — Minimal template (CLAUDE.md, pyproject.toml, .gitignore).
+
+**Skills extras condicionales:** un template puede declarar `extraSkills: [...]` en el dict `TEMPLATES` de `init.js`. Para cada nombre, busca `src/templates/<tmpl>/skills/<skillName>/` y lo copia recursivo a `.claude/skills/<skillName>/`. `update.js` mantiene un mapa `TEMPLATE_EXTRA_SKILLS` (sincronizar manualmente) y refresca la skill solo si ya está instalada en el proyecto.
 
 ## Key Design Decisions
 

@@ -1,0 +1,9 @@
+# Repos base de Quuo — siempre presentes
+git+https://USERNAME:PASSWORD@bitbucket.org/red5g-admin/quuo-models.git#egg=quuo-models
+git+https://USERNAME:PASSWORD@bitbucket.org/red5g-admin/quuo-auth.git#egg=quuo-auth
+git+https://USERNAME:PASSWORD@bitbucket.org/red5g-admin/quuo-common.git#egg=quuo-common
+
+# Opcionales — descomentar según necesidad
+# git+https://USERNAME:PASSWORD@bitbucket.org/red5g-admin/quuo-cognito.git#egg=quuo-cognito
+# git+https://USERNAME:PASSWORD@bitbucket.org/red5g-admin/quuo-cronjob.git#egg=quuo-cronjob
+# git+https://USERNAME:PASSWORD@bitbucket.org/red5g-admin/quuo-resources.git#egg=quuo-resources

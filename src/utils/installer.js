@@ -42,12 +42,13 @@ export async function installOpenSpec() {
 export async function initOpenSpec(cwd) {
   const spinner = ora("Inicializando OpenSpec en el proyecto...").start();
   try {
+    run("openspec config set delivery skills");
     run("openspec init --tools claude", { cwd });
-    spinner.succeed("OpenSpec inicializado");
+    spinner.succeed("OpenSpec inicializado (delivery: skills)");
     return true;
   } catch (err) {
     spinner.fail("Error inicializando OpenSpec");
-    log.warn("Ejecuta manualmente: openspec init --tools claude");
+    log.warn("Ejecuta manualmente: openspec config set delivery skills && openspec init --tools claude");
     return false;
   }
 }
