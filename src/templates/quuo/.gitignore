@@ -36,6 +36,9 @@ node_modules/
 htmlcov/
 .coverage
 
+# Claude Code (config local del agente — no se commitea)
+.claude/
+
 # Beads
 .beads/
 
