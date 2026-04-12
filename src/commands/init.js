@@ -207,7 +207,49 @@ export async function initCommand(options) {
   mkdirSync(join(claudeDir, "fixes"), { recursive: true });
   mkdirSync(join(claudeDir, "agent-memory", "code-auditor"), { recursive: true });
 
-  // ─── Paso 6: OpenSpec init + Beads init (ANTES del plugin para que podamos sobrescribir) ───
+  // ─── Template files (CLAUDE.md, pyproject.toml, .env.example, .gitignore) ───
+  // IMPORTANTE: se copian ANTES de initBeads() porque `bd setup claude` appendea
+  // su bloque BEADS INTEGRATION al CLAUDE.md existente. Si el CLAUDE.md no existe
+  // cuando bd corre, bd crea uno desde scratch con su propio template y nuestros
+  // checks de !existsSync hacen que el CLAUDE.md del template quuo se omita.
+  const templateDir = join(TEMPLATES_DIR, template);
+
+  const claudeMdDest = join(cwd, "CLAUDE.md");
+  if (!existsSync(claudeMdDest)) {
+    const claudeMdSrc = join(templateDir, "CLAUDE.md");
+    if (existsSync(claudeMdSrc)) {
+      writeFileSync(claudeMdDest, readFileSync(claudeMdSrc, "utf-8"));
+      log.success("CLAUDE.md creado");
+    }
+  } else {
+    log.info("CLAUDE.md ya existe — se mantiene");
+  }
+
+  const pyprojectDest = join(cwd, "pyproject.toml");
+  if (!existsSync(pyprojectDest)) {
+    const pyprojectSrc = join(templateDir, "pyproject.toml");
+    if (existsSync(pyprojectSrc)) {
+      writeFileSync(pyprojectDest, readFileSync(pyprojectSrc, "utf-8"));
+      log.success("pyproject.toml creado");
+    }
+  } else {
+    log.info("pyproject.toml ya existe — se mantiene");
+  }
+
+  const envSrc = join(templateDir, ".env.example");
+  if (existsSync(envSrc) && !existsSync(join(cwd, ".env.example"))) {
+    writeFileSync(join(cwd, ".env.example"), readFileSync(envSrc, "utf-8"));
+    log.success(".env.example creado");
+  }
+
+  const gitignoreSrc = join(templateDir, ".gitignore");
+  if (existsSync(gitignoreSrc) && !existsSync(join(cwd, ".gitignore"))) {
+    writeFileSync(join(cwd, ".gitignore"), readFileSync(gitignoreSrc, "utf-8"));
+    log.success(".gitignore creado");
+  }
+
+  // ─── OpenSpec init + Beads init (DESPUÉS de los template files) ───
+  // bd setup claude appendeará su bloque BEADS INTEGRATION al CLAUDE.md del template.
   if (!options.skipTools) {
     step++;
     log.step(step, totalSteps, "Inicializando OpenSpec en el proyecto...");
@@ -305,50 +347,6 @@ export async function initCommand(options) {
     log.success("settings.json creado (permisos + hook ruff-gate)");
   } else {
     log.info("settings.json ya existe — se mantiene");
-  }
-
-  // ─── Paso 7: Template files (CLAUDE.md, pyproject.toml, etc.) ───
-  step++;
-  log.step(step, totalSteps, "Creando archivos del proyecto...");
-
-  const templateDir = join(TEMPLATES_DIR, template);
-
-  // CLAUDE.md
-  const claudeMdDest = join(cwd, "CLAUDE.md");
-  if (!existsSync(claudeMdDest)) {
-    const claudeMdSrc = join(templateDir, "CLAUDE.md");
-    if (existsSync(claudeMdSrc)) {
-      writeFileSync(claudeMdDest, readFileSync(claudeMdSrc, "utf-8"));
-      log.success("CLAUDE.md creado");
-    }
-  } else {
-    log.info("CLAUDE.md ya existe — se mantiene");
-  }
-
-  // pyproject.toml
-  const pyprojectDest = join(cwd, "pyproject.toml");
-  if (!existsSync(pyprojectDest)) {
-    const pyprojectSrc = join(templateDir, "pyproject.toml");
-    if (existsSync(pyprojectSrc)) {
-      writeFileSync(pyprojectDest, readFileSync(pyprojectSrc, "utf-8"));
-      log.success("pyproject.toml creado");
-    }
-  } else {
-    log.info("pyproject.toml ya existe — se mantiene");
-  }
-
-  // .env.example
-  const envSrc = join(templateDir, ".env.example");
-  if (existsSync(envSrc) && !existsSync(join(cwd, ".env.example"))) {
-    writeFileSync(join(cwd, ".env.example"), readFileSync(envSrc, "utf-8"));
-    log.success(".env.example creado");
-  }
-
-  // .gitignore
-  const gitignoreSrc = join(templateDir, ".gitignore");
-  if (existsSync(gitignoreSrc) && !existsSync(join(cwd, ".gitignore"))) {
-    writeFileSync(join(cwd, ".gitignore"), readFileSync(gitignoreSrc, "utf-8"));
-    log.success(".gitignore creado");
   }
 
   // ─── Scaffold ───
